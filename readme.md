@@ -1,205 +1,129 @@
-# ![RealWorld Example App](logo.png)
+# Conduit on Graftcode
 
-ASP.NET Core codebase containing real world examples (CRUD, auth, advanced patterns, etc.) that adheres to the [RealWorld](https://github.com/realworld-apps/realworld) spec and API.
+This repository is a fork of the [RealWorld Conduit](https://github.com/gothinkster/aspnetcore-realworld-example-app) sample. It exists to show Graftcode in use: user, profile, article, comment, and tag operations are hosted as a graft on Graftcode Gateway and checked with `gc-realworld-graft-e2e`.
 
-## [RealWorld](https://github.com/realworld-apps/realworld)
+The graft stack does not serve HTTP. The previous ASP.NET Core host, Mediator pipeline, Entity Framework model, and JWT middleware are gone. The same operations and rules run as static methods over SQL Server.
 
-This codebase demonstrates a fully fledged application built with ASP.NET Core and feature-oriented vertical slices, including CRUD operations, authentication, routing, pagination, and more.
+## Exposed public surface
 
-The implementation follows ASP.NET Core community style guides and best practices where they fit the RealWorld contract.
+Module:
 
-For information on how this works with other frontends and backends, see the [RealWorld](https://github.com/realworld-apps/realworld) repository.
+- `Conduit.dll`
 
-## How it works
+Types and methods (names have no `Async` suffix):
 
-This uses ASP.NET Core with:
+- `Conduit.Services.UserService`
+  - `Register`, `Login`, `GetCurrentUser`, `UpdateUser`
+- `Conduit.Services.ProfileService`
+  - `GetProfile`, `Follow`, `Unfollow`
+- `Conduit.Services.ArticleService`
+  - `ListArticles`, `Feed`, `GetArticle`, `CreateArticle`, `EditArticle`, `DeleteArticle`, `FavoriteArticle`, `UnfavoriteArticle`
+- `Conduit.Services.CommentService`
+  - `CreateComment`, `ListComments`, `DeleteComment`
+- `Conduit.Services.TagService`
+  - `ListTags`
 
-- CQRS and source-generated [Mediator](https://github.com/martinothamar/Mediator)
-- [Mapperly](https://mapperly.riok.app/) for compile-time object mapping
-- [FluentValidation](https://github.com/FluentValidation/FluentValidation)
-- Feature folders and vertical slices
-- [Entity Framework Core](https://learn.microsoft.com/ef/core/) with SQLite for local/demo use. The application also includes SQL Server support.
-- Built-in Swagger via [Swashbuckle.AspNetCore](https://github.com/domaindrivendev/Swashbuckle.AspNetCore)
-- [Bullseye](https://github.com/adamralph/bullseye) for building
-- JWT authentication using [ASP.NET Core JWT Bearer Authentication](https://learn.microsoft.com/aspnet/core/security/authentication/jwt)
-- [CSharpier](https://csharpier.com/) for formatting
-- `.editorconfig` to enforce usage patterns
+Repositories, row types, the password hasher, the token issuer, and `GraftAsync` stay off the gateway allowlist. The runtime image is `mcr.microsoft.com/dotnet/runtime:10.0`. The host replaces the platform stub of `Microsoft.Data.SqlClient` with the unix implementation, because GG loads the flat DLL.
 
-The basic architecture is based on this reference architecture: [ContosoUniversityCore](https://github.com/jbogard/ContosoUniversityCore).
+Protected methods take the token as an ordinary argument. An empty token is anonymous on `ListArticles`, `GetArticle`, `GetProfile`, `ListComments`, and `ListTags`. A missing token on a method that needs a user fails with `token is missing`.
 
-## Getting started
+This demo starts the stack without `GG_PROJECT_KEY`.
 
-Install the .NET SDK specified in [`global.json`](global.json), currently `10.0.402`.
-`rollForward: latestFeature` allows newer .NET 10 feature bands and patches; CI reads this file too.
+## Record format
 
-To start locally on a fresh SQLite database:
+Fields are joined with `|`. `\` and `|` inside a field are escaped as `\\` and `\|`. Timestamps use the round-trip `o` pattern in UTC. A missing row is `string.Empty`. An empty list is an empty array. `DeleteArticle` and `DeleteComment` return `string.Empty`.
 
-```sh
-make run-local
+- user: `email|token|username|bio|image`
+- profile: `username|bio|image|following`
+- article: `slug|title|description|body|createdAt|updatedAt|favorited|favoritesCount|tags|authorUsername|authorBio|authorImage|authorFollowing`
+- comment: `id|createdAt|updatedAt|body|authorUsername|authorBio|authorImage|authorFollowing`
+- tags: `string[]`
+
+`body` is empty on `ListArticles` and `Feed`. Tags inside an article are comma-separated and sorted by name; `\` and `,` in a tag are escaped before the field is escaped. `favorited` and `following` are `true` or `false`.
+
+An empty string on `UpdateUser` or on the title, description, and body of `EditArticle` keeps the current value. `EditArticle` always replaces the tag list. `ListArticles` and `Feed` ignore a filter when its string is empty. A limit of `0` or less uses 20. A negative offset uses 0.
+
+Broken rules throw `InvalidOperationException` with a stable message: `username can't be blank`, `email can't be blank`, `password can't be blank`, `password is too short (minimum is 8 characters)`, `username has already been taken`, `email has already been taken`, `credentials invalid`, `token is missing`, `user not found`, `profile not found`, `article not found`, `comment not found`, `article forbidden`, `comment forbidden`, `title can't be blank`, `description can't be blank`, `body can't be blank`.
+
+The token is an opaque HMAC of the person id and an expiry. Clients pass it back. They do not parse it.
+
+## 1) Start Docker stack with GG
+
+From `ports/gc-aspnetcore-realworld-example-app/src`:
+
+```powershell
+docker compose -f docker-compose.graft.yml up --build -d
 ```
 
-The Makefile generates a local-development signing key using OpenSSL and reuses it
-from `.jwt-signing-key` (excluded from Git and Docker images). An explicitly supplied
-`Jwt__SigningKey` takes precedence. Keep the key file to preserve sessions between runs.
-Local runs use `conduit-local.db` in the repository root, leaving older `realworld.db`
-files untouched. Override the path with `make run-local LOCAL_DB=/path/to/conduit.db`,
-or supply `ConnectionStrings__Conduit` to use your own connection string.
+Ports:
 
-The API is at `http://localhost:5050/api` and Swagger at `http://localhost:5050/swagger`.
-**Existing databases created by older versions
-must be backed up and baselined first:** see [database migrations](docs/database-migrations.md).
+- `8094` Gateway (`/nuget`, WebSocket)
+- `8095` Graft Vision
+- `1436` SQL Server
 
-The main validation target formats the repository, builds the solution in Release mode, and runs the integration tests:
+WebSocket endpoint for clients:
 
-```sh
-dotnet run --project build/build.csproj -- test
+- `ws://localhost:8094/ws`
+
+Graft Vision:
+
+- `http://localhost:8095`
+
+The seed user the verifier reads:
+
+- email `jacob@example.com`
+- username `jacob`
+- password `password1234`
+- article slug `how-to-train-your-dragon`
+- tag `dragons`
+
+## 2) Install generated clients
+
+After the container logs `dotnet add package`, open `http://localhost:8094/nuget` and use the package id printed there.
+
+The id below is a placeholder shape. Without a `GG_PROJECT_KEY` linked to your Graftcode account, every generation gets a new suffix. With that key the id stays stable.
+
+- `graft.nuget.conduit_euvmqa` 1.0.0
+
+NuGet will not replace an existing `1.0.0` when the package id stays the same. When the hash changes, delete the old package folder and restore from the feed printed in the container log. When the hash stays and the host surface changed, delete the cached `1.0.0` and restore from that same feed.
+
+Runtime config:
+
+```powershell
+$env:GRAFTCODE_CONFIG_NUGET_CONDUIT = "name=graft.nuget.Conduit; runtime=netcore; modules=Conduit.dll; host=ws://localhost:8094/ws; stateless=true"
 ```
 
-To format without building:
+The client reads `GRAFTCODE_CONFIG_NUGET_CONDUIT`. The package id still carries the generation suffix.
 
-```sh
-dotnet run --project build/build.csproj -- format
+## 3) Run the e2e verifier
+
+```powershell
+dotnet run --project C:\Coding\Marketing\gc-realworld-graft-e2e\gc-realworld-graft-e2e.csproj -c Release -- `
+  --host "ws://localhost:8094/ws" `
+  --stateless true `
+  --report "C:\Coding\Marketing\gc-realworld-graft-e2e\reports\realworld-e2e.json"
 ```
 
-The full CI-equivalent build, test, and publish pipeline is:
+`--assembly` is ignored. The runner uses the PackageReference checked into its project file. That id is one generation; replace it when `/nuget` prints a new suffix.
 
-```sh
-dotnet run --project build/build.csproj
+Exit codes: `0` all checks passed, `1` an assertion failed, `2` the run was blocked before assertions.
+
+## 4) Stop
+
+```powershell
+docker compose -f docker-compose.graft.yml down
 ```
 
-CI uses locked restores and checks formatting without modifying files:
+## Troubleshooting
 
-```sh
-dotnet restore Conduit.slnx --locked-mode
-dotnet run --project build/build.csproj --no-restore -- --check-format
-```
+- `dotnet add package` takes its source from the container log. There is no fixed feed URL. Without a project key, each start prints a new `https://grft.dev/<guid>__free`. If restore fails, restart the host and use the URL from that log.
+- If port `8094` is occupied, change the published ports in `src/docker-compose.graft.yml` and point the client host at the new WebSocket URL.
+- Restore under `src` uses the repo-local `NuGet.Config` (nuget.org only).
 
-After changing dependencies, run `dotnet restore Conduit.slnx` and include the updated
-`packages.lock.json` files. The build then enforces those lock files.
+## Migration notes
 
-See [`AGENTS.md`](AGENTS.md) for repository layout, development conventions, and complete validation guidance.
+The exposed slice keeps the RealWorld operations: registration and login, the current user, profiles and follows, article list, feed, create, edit, delete, favorite, comments, and tags. Slugs still come from the title, with a numeric suffix when the slug is already taken. Only the author can edit or delete an article, and only the author can delete a comment.
 
-## Docker Build
+What the graft replaces, and what left the exposed project: HTTP controllers, Swagger, the Mediator pipeline, FluentValidation, Entity Framework, SQLite, and request-context authentication. `GraftAsync` is the temporary bridge from the synchronous graft methods to the asynchronous SQL calls. When the gateway accepts `Task`, delete that helper and return `Task` from the same method names.
 
-The Makefile also sets up the local-development signing key for Docker:
-
-```sh
-make build
-make run
-```
-
-When running directly without Make, supply `Jwt__SigningKey` yourself (for example,
-`export Jwt__SigningKey="$(openssl rand -base64 32)"` for local development).
-
-Each deployment must use its own cryptographically random key (at least 32 bytes,
-base64-encoded), provided through protected configuration such as a secret manager
-or the `Jwt__SigningKey` environment variable. Never commit it or bake it into an
-image. Startup fails for missing, malformed, short, or obvious placeholder keys.
-Issuer and audience are identifiers, not secrets.
-
-Only version-2 tokens with `conduit_token_version: "2"` and a stable `user:<id>`
-subject are accepted. Legacy username-subject and unversioned tokens are rejected,
-even when their subject resembles a new user ID. There is no compatibility fallback.
-All existing sessions must sign in again after this upgrade. New sessions survive
-username changes; authentication rejects tokens belonging to deleted users.
-
-Keep the key stable across restarts and shared only among instances of the same
-deployment. To rotate a compromised key, replace it on every instance and restart;
-all previously issued tokens become invalid and users must sign in again. Deployments
-using the former public default key should rotate immediately. Managed API test
-targets generate a fresh ephemeral key when one is not supplied.
-
-There is a `Makefile` for macOS and Linux:
-
-- `make build` executes `docker compose build`
-- `make run` executes `docker compose up`
-
-Docker exposes `http://localhost:8080/api` and `/swagger`, not port 5050.
-The container runs as the non-root `app` user. Compose stores SQLite data in the
-`conduit-data` named volume mounted at `/data`; data survives container replacement.
-For custom bind mounts, make the database directory writable by the container user.
-Local databases and the RealWorld submodule are excluded from the image build context.
-
-The above might work for Docker on Windows.
-
-## Local building
-
-The build is a C# project:
-
-```sh
-dotnet run --project build/build.csproj -- test
-```
-
-## Local API
-
-Run the API with `make run-local`. Swagger is available at:
-
-`http://localhost:5050/swagger`
-
-## RealWorld API spec tests
-
-The official [RealWorld API spec](https://github.com/realworld-apps/realworld) test collections ([Hurl](https://hurl.dev) and [Bruno](https://www.usebruno.com)) run against this implementation. The spec repository is vendored as the `realworld` git submodule:
-
-- `make submodule` fetches the spec (`git submodule update --init realworld`)
-- `make test-hurl-with-managed-server` starts the API on a fresh SQLite database, runs the Hurl suite, and shuts it down (requires [Hurl](https://hurl.dev))
-- `make test-bruno-with-managed-server` does the same with the Bruno collection (requires [Bun](https://bun.sh)); the wrapper pins Bruno CLI `4.2.1`
-- `make test-hurl` / `make test-bruno` run the suites against an already running server (`make run-local`)
-
-Both suites run in CI via the "RealWorld API Tests" workflow.
-
-Managed targets use isolated temporary databases and generated signing keys, require a
-successful readiness response, and clean up the server and database on exit. They do
-not delete your local database. Override the port with, for example,
-`make test-hurl-with-managed-server API_URL=http://localhost:5098`.
-They require Bash, curl, OpenSSL, and .NET, but not GNU `timeout`.
-Hurl `8.0.1` is used in CI. The pinned submodule is tested on pushes and pull requests;
-a weekly Hurl canary also tests upstream HEAD without changing the committed pin.
-
-All endpoints are rooted under `/api` as the spec requires; the prefix can be changed through the `ApiPrefix` configuration key (appsettings or an environment variable).
-
-## Database configuration
-
-Configuration can be supplied through appsettings or environment variables:
-
-| Setting | Environment variable | Default |
-| --- | --- | --- |
-| Database provider | `Database__Provider` | `sqlite` (`sqlserver` also supported) |
-| Connection string | `ConnectionStrings__Conduit` | `Data Source=realworld.db` locally; `/data/realworld.db` in Docker |
-| Apply migrations on startup | `Database__ApplyMigrations` | `true` |
-
-SQLite example:
-
-```sh
-export Database__Provider=sqlite
-export ConnectionStrings__Conduit='Data Source=/absolute/writable/path/conduit.db'
-make run-local
-```
-
-SQL Server example (use a secret manager for real credentials):
-
-```sh
-export Database__Provider=sqlserver
-export ConnectionStrings__Conduit='Server=localhost,1433;Database=Conduit;User ID=conduit;Password=<secret>;Encrypt=True;TrustServerCertificate=True'
-make run-local
-```
-
-`TrustServerCertificate=True` is for local development only. SQL Server requires an
-explicit connection string and a reachable server; it does not require a Windows API
-container. The old `ASPNETCORE_Conduit_DatabaseProvider` and
-`ASPNETCORE_Conduit_ConnectionString` variables remain fallback aliases.
-For managed deployments, apply reviewed migration scripts before starting instances
-and set `Database__ApplyMigrations=false`. See [migration guidance](docs/database-migrations.md).
-
-## Password storage
-
-New and changed passwords use ASP.NET Core Identity's versioned PBKDF2-HMAC-SHA512
-format with 210,000 iterations and a cryptographically random embedded salt.
-Existing HMAC passwords remain usable and are upgraded after successful login;
-failed logins never rewrite hashes. Rollback to an older application version will
-not support upgraded passwords. Database uniqueness protects usernames, emails,
-and article slugs, including concurrent writes. Usernames are limited to 256
-characters and emails to 320 characters for SQL Server index compatibility.
-
-## GitHub Actions build
-
-![Build and Test](https://github.com/realworld-apps/aspnetcore-realworld-example-app/actions/workflows/dotnetcore.yml/badge.svg)
+The business-slice line count is the C# under `src/Conduit`, excluding the host project, container files, and this README.
