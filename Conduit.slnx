@@ -1,14 +1,9 @@
-﻿<Solution>
-    <Folder Name="/build/">
-        <Project Path="build\build.csproj" Type="Classic C#" />
-    </Folder>
+<Solution>
     <Folder Name="/config/">
         <File Path="Directory.Packages.props" />
         <File Path="Directory.Build.props" />
         <File Path="global.json" />
         <File Path=".editorconfig" />
-        <File Path="docker-compose.yml" />
-        <File Path="Dockerfile" />
         <File Path="NuGet.config" />
         <File Path=".github\workflows\dotnetcore.yml" />
         <File Path=".dockerignore" />
@@ -16,12 +11,7 @@
         <File Path=".rules4rc" />
     </Folder>
     <Folder Name="/src/">
-        <Project Path="src\Conduit\Conduit.csproj" Type="Classic C#" />
-    </Folder>
-    <Folder Name="/tests/">
-        <Project
-            Path="tests\Conduit.IntegrationTests\Conduit.IntegrationTests.csproj"
-            Type="Classic C#"
-        />
+        <Project Path="src\Conduit\Conduit.csproj" Type="C#" />
+        <Project Path="src\Conduit.GraftHost\Conduit.GraftHost.csproj" Type="C#" />
     </Folder>
 </Solution>
