@@ -4,6 +4,12 @@ This repository is a fork of the [RealWorld Conduit](https://github.com/gothinks
 
 The graft stack does not serve HTTP. The previous ASP.NET Core host, Mediator pipeline, Entity Framework model, and JWT middleware are gone. The same operations and rules run as static methods over SQL Server.
 
+## Testing note
+
+We intentionally rolled back the recent attempt to restore legacy in-repo unit tests for this port. In this GRAFT shape, public entry points are static methods, and the original .NET test architecture does not isolate or mock static boundaries well without intrusive refactoring.
+
+That restoration produced brittle tests with high maintenance cost and low confidence gain. For this port we prioritize integration and E2E verification of the exposed GRAFT surface, where business behavior is validated end-to-end.
+
 ## Exposed public surface
 
 Module:
