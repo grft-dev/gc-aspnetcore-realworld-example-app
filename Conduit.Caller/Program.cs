@@ -1,24 +1,54 @@
 using graft.nuget.Conduit.Graft;
 
-GraftConfig.Host = "ws://localhost:8102/ws";
+var host = Environment.GetEnvironmentVariable("GRAFT_HOST") ?? "ws://localhost:8102/ws";
+GraftConfig.Host = host;
 
-var suffix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-var email = $"caller{suffix}@example.com";
-var username = $"caller{suffix}";
-const string password = "Password1";
-var title = $"Caller article {suffix}";
-
-await UsersService.Register(username, email, password);
-var token = await UsersService.Login(email, password);
-if (string.IsNullOrWhiteSpace(token))
+try
 {
-    throw new InvalidOperationException("Login did not return a token.");
+    var suffix = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+    var email = $"caller{suffix}@example.com";
+    var username = $"caller{suffix}";
+    const string password = "Password1";
+    var title = $"Caller article {suffix}";
+    var description = $"Caller description {suffix}";
+    var body = $"Caller body {suffix}";
+
+    Console.WriteLine($"Caller E2E start (host: {host})");
+    Console.WriteLine($"Registering user '{username}'...");
+    var registerToken = await UsersService.Register(username, email, password);
+    if (string.IsNullOrWhiteSpace(registerToken))
+    {
+        throw new InvalidOperationException("Register did not return a token.");
+    }
+
+    Console.WriteLine($"Logging in user '{email}'...");
+    var loginToken = await UsersService.Login(email, password);
+    if (string.IsNullOrWhiteSpace(loginToken))
+    {
+        throw new InvalidOperationException("Login did not return a token.");
+    }
+
+    Console.WriteLine("Creating article...");
+    var slug = await ArticlesService.Create(loginToken, title, description, body);
+    if (string.IsNullOrWhiteSpace(slug))
+    {
+        throw new InvalidOperationException("Create did not return a slug.");
+    }
+
+    Console.WriteLine($"Reading article '{slug}'...");
+    var readTitle = await ArticlesService.Get(loginToken, slug);
+    if (!string.Equals(readTitle, title, StringComparison.Ordinal))
+    {
+        throw new InvalidOperationException(
+            $"Article title was '{readTitle}', expected '{title}'."
+        );
+    }
+
+    Console.WriteLine("Caller E2E smoke passed.");
 }
-
-var slug = await ArticlesService.Create(token, title, "From the graft caller", "Body");
-var read = await ArticlesService.Get(token, slug);
-Console.WriteLine($"{slug} {read}");
-if (!string.Equals(read, title, StringComparison.Ordinal))
+catch (Exception ex)
 {
-    throw new InvalidOperationException($"Article title was '{read}', expected '{title}'.");
+    Console.Error.WriteLine("Caller E2E smoke failed.");
+    Console.Error.WriteLine(ex.ToString());
+    Environment.ExitCode = 1;
 }

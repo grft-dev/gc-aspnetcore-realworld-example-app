@@ -13,8 +13,10 @@ public static class UsersService
             nameof(UsersService),
             nameof(Register),
             async _ =>
-                (await Conduit.Features.Users.UsersService.Register(username, email, password)).User.Token
-                    ?? string.Empty,
+                (await Conduit.Features.Users.UsersService.Register(username, email, password))
+                    .User
+                    .Token
+                ?? string.Empty,
             ("username", username),
             ("email", email),
             ("password", password)
@@ -26,7 +28,7 @@ public static class UsersService
             nameof(Login),
             async _ =>
                 (await Conduit.Features.Users.UsersService.Login(email, password)).User.Token
-                    ?? string.Empty,
+                ?? string.Empty,
             ("email", email),
             ("password", password)
         );
@@ -54,7 +56,8 @@ public static class ArticlesService
                         body,
                         null
                     )
-                ).Slug ?? string.Empty,
+                ).Slug
+                ?? string.Empty,
             ("token", token),
             ("title", title),
             ("description", description),
@@ -67,7 +70,7 @@ public static class ArticlesService
             nameof(Get),
             async _ =>
                 (await Conduit.Features.Articles.ArticlesService.Get(token, slug)).Title
-                    ?? string.Empty,
+                ?? string.Empty,
             ("token", token),
             ("slug", slug)
         );

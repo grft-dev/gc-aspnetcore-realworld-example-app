@@ -55,6 +55,15 @@ The main validation target formats the repository, builds the solution in Releas
 dotnet run --project build/build.csproj -- test
 ```
 
+For local end-to-end validation (standard test pipeline + Graft caller smoke), run:
+
+```sh
+dotnet run --project build/build.csproj -- e2e
+```
+
+The `e2e` target runs `Conduit.Caller`, which expects a reachable Graft host at
+`ws://localhost:8102/ws` by default. Override with `GRAFT_HOST` when needed.
+
 To format without building:
 
 ```sh

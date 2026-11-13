@@ -1,9 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Infrastructure;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Users;
 
@@ -19,11 +18,17 @@ public static class UsersService
             nameof(UsersService),
             nameof(Register),
             async ctx =>
-                await ctx.GetRequiredService<IMediator>()
-                    .Send(
-                        new Create.Command(new Create.UserData(username, email, password)),
-                        CancellationToken.None
-                    ),
+            {
+                var handling = ctx.GetRequiredService<UsersHandling>();
+                return await ctx.RunInTransactionAsync(
+                    () =>
+                        handling.Register(
+                            new Create.UserData(username, email, password),
+                            CancellationToken.None
+                        ),
+                    CancellationToken.None
+                );
+            },
             ("username", username),
             ("email", email),
             ("password", password)
@@ -34,13 +39,19 @@ public static class UsersService
             nameof(UsersService),
             nameof(Login),
             async ctx =>
-                await ctx.GetRequiredService<IMediator>()
-                    .Send(
-                        new Login.Command(
-                            new Login.UserData { Email = email, Password = password }
+            {
+                var handling = ctx.GetRequiredService<UsersHandling>();
+                return await ctx.RunInTransactionAsync(
+                    () =>
+                        handling.Login(
+                            new Login.Command(
+                                new Login.UserData { Email = email, Password = password }
+                            ),
+                            CancellationToken.None
                         ),
-                        CancellationToken.None
-                    ),
+                    CancellationToken.None
+                );
+            },
             ("email", email),
             ("password", password)
         );

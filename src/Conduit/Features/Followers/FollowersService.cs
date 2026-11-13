@@ -1,10 +1,9 @@
 using System.Threading;
-using Conduit;
 using System.Threading.Tasks;
+using Conduit;
 using Conduit.Features.Profiles;
+using Conduit.Infrastructure;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Followers;
 
@@ -23,8 +22,11 @@ public static class FollowersService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new Add.Command(username), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<FollowersHandling>();
+                    return await ctx.RunInTransactionAsync(
+                        () => handling.Follow(username, CancellationToken.None),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),
@@ -39,8 +41,11 @@ public static class FollowersService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new Delete.Command(username), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<FollowersHandling>();
+                    return await ctx.RunInTransactionAsync(
+                        () => handling.Unfollow(username, CancellationToken.None),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),

@@ -1,9 +1,7 @@
 using System.Threading;
-using Conduit;
 using System.Threading.Tasks;
+using Conduit;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Profiles;
 
@@ -22,8 +20,8 @@ public static class ProfilesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new Details.Query(username), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<ProfilesHandling>();
+                    return await handling.Get(new Details.Query(username), CancellationToken.None);
                 }
             },
             ("token", token),

@@ -2,9 +2,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Infrastructure;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Comments;
 
@@ -32,14 +31,16 @@ public static class CommentsService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var envelope = await ctx.GetRequiredService<IMediator>()
-                        .Send(
-                            new Create.Command(
-                                new Create.Model(new Create.CommentData(body)),
-                                slug
+                    var handling = ctx.GetRequiredService<CommentsHandling>();
+                    var envelope = await ctx.RunInTransactionAsync(
+                        () =>
+                            handling.Create(
+                                new Create.CommentData(body),
+                                slug,
+                                CancellationToken.None
                             ),
-                            CancellationToken.None
-                        );
+                        CancellationToken.None
+                    );
                     return From(envelope.Comment);
                 }
             },
@@ -56,8 +57,11 @@ public static class CommentsService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var envelope = await ctx.GetRequiredService<IMediator>()
-                        .Send(new List.Query(slug), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<CommentsHandling>();
+                    var envelope = await handling.List(
+                        new List.Query(slug),
+                        CancellationToken.None
+                    );
                     return envelope.Comments.Select(From).ToArray();
                 }
             },
@@ -73,8 +77,11 @@ public static class CommentsService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    await ctx.GetRequiredService<IMediator>()
-                        .Send(new Delete.Command(slug, id), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<CommentsHandling>();
+                    await ctx.RunInTransactionAsync(
+                        () => handling.Delete(slug, id, CancellationToken.None),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),

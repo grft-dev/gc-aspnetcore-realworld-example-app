@@ -1,9 +1,7 @@
 using System.Threading;
-using Conduit;
 using System.Threading.Tasks;
+using Conduit;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Tags;
 
@@ -22,8 +20,8 @@ public static class TagsService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, null)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new List.Query(), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<TagsHandling>();
+                    return await handling.List(new List.Query(), CancellationToken.None);
                 }
             }
         );

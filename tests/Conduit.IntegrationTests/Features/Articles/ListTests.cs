@@ -10,18 +10,18 @@ public class ListTests : SliceFixture
     [Fact]
     public async Task Expect_List_Articles_No_Params()
     {
-        var command = new Create.Command(
-            new Create.ArticleData
-            {
-                Title = "Test article list",
-                Description = "Description",
-                Body = "Body",
-                TagList = ["tag1"],
-            }
-        );
+        var command = new Create.ArticleData
+        {
+            Title = "Test article list",
+            Description = "Description",
+            Body = "Body",
+            TagList = ["tag1"],
+        };
         await ArticleHelpers.CreateArticle(this, command);
 
-        var result = await SendAsync(new List.Query(null, null, null, null, null));
+        var result = await SendAsync<ArticlesEnvelope>(
+            new List.Query(null, null, null, null, null)
+        );
 
         Assert.NotNull(result);
         Assert.True(result.ArticlesCount > 0);
@@ -30,18 +30,18 @@ public class ListTests : SliceFixture
     [Fact]
     public async Task Expect_List_Articles_With_Tag_Filter()
     {
-        var command = new Create.Command(
-            new Create.ArticleData
-            {
-                Title = "Test article tag filter",
-                Description = "Description",
-                Body = "Body",
-                TagList = ["uniquetag123"],
-            }
-        );
+        var command = new Create.ArticleData
+        {
+            Title = "Test article tag filter",
+            Description = "Description",
+            Body = "Body",
+            TagList = ["uniquetag123"],
+        };
         await ArticleHelpers.CreateArticle(this, command);
 
-        var result = await SendAsync(new List.Query("uniquetag123", null, null, null, null));
+        var result = await SendAsync<ArticlesEnvelope>(
+            new List.Query("uniquetag123", null, null, null, null)
+        );
 
         Assert.NotNull(result);
         Assert.True(result.ArticlesCount > 0);
@@ -50,7 +50,9 @@ public class ListTests : SliceFixture
     [Fact]
     public async Task Expect_List_Articles_With_Nonexistent_Tag_Returns_Empty()
     {
-        var result = await SendAsync(new List.Query("nonexistenttag99999", null, null, null, null));
+        var result = await SendAsync<ArticlesEnvelope>(
+            new List.Query("nonexistenttag99999", null, null, null, null)
+        );
 
         Assert.NotNull(result);
         Assert.Equal(0, result.ArticlesCount);
@@ -62,23 +64,21 @@ public class ListTests : SliceFixture
         var user = await Users.UserHelpers.CreateDefaultUser(this);
         var dbContext = GetDbContext();
         var currentAccessor = new StubCurrentUserAccessor(user.Username);
-        var handler = new Create.Handler(dbContext, currentAccessor);
+        var handling = new ArticlesHandling(dbContext, currentAccessor);
         for (var i = 0; i < 3; i++)
         {
-            await handler.Handle(
-                new Create.Command(
-                    new Create.ArticleData
-                    {
-                        Title = $"Test article pagination {i}",
-                        Description = "Description",
-                        Body = "Body",
-                    }
-                ),
+            await handling.Create(
+                new Create.ArticleData
+                {
+                    Title = $"Test article pagination {i}",
+                    Description = "Description",
+                    Body = "Body",
+                },
                 CancellationToken.None
             );
         }
 
-        var result = await SendAsync(new List.Query(null, null, null, 2, 0));
+        var result = await SendAsync<ArticlesEnvelope>(new List.Query(null, null, null, 2, 0));
 
         Assert.NotNull(result);
         Assert.Equal(2, result.Articles.Count);
@@ -90,9 +90,9 @@ public class ListTests : SliceFixture
         var user = await Users.UserHelpers.CreateDefaultUser(this);
         var dbContext = GetDbContext();
         var currentAccessor = new StubCurrentUserAccessor(user.Username);
-        var handler = new List.QueryHandler(dbContext, currentAccessor);
+        var handling = new ArticlesHandling(dbContext, currentAccessor);
 
-        var result = await handler.Handle(
+        var result = await handling.List(
             new List.Query(null, null, null, null, null) { IsFeed = true },
             CancellationToken.None
         );

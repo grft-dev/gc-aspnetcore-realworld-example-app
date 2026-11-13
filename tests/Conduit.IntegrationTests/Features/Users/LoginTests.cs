@@ -26,7 +26,7 @@ public class LoginTests : SliceFixture
             new Login.UserData { Email = "email", Password = "password" }
         );
 
-        var user = await SendAsync(command);
+        var user = await SendAsync<UserEnvelope>(command);
 
         Assert.NotNull(user?.User);
         Assert.Equal(user.User.Email, command.User.Email);

@@ -120,8 +120,12 @@ public static class GraftHost
                 var host = builder.Build();
                 using (var scope = host.Services.CreateScope())
                 {
-                    var database = scope.ServiceProvider.GetRequiredService<Infrastructure.ConduitContext>();
-                    Infrastructure.DatabaseInitializer.InitializeAsync(database).GetAwaiter().GetResult();
+                    var database =
+                        scope.ServiceProvider.GetRequiredService<Infrastructure.ConduitContext>();
+                    Infrastructure
+                        .DatabaseInitializer.InitializeAsync(database)
+                        .GetAwaiter()
+                        .GetResult();
                 }
 
                 host.StartAsync().GetAwaiter().GetResult();

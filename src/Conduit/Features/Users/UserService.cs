@@ -5,8 +5,6 @@ using Conduit;
 using Conduit.Infrastructure;
 using Conduit.Infrastructure.Errors;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Users;
 
@@ -32,8 +30,11 @@ public static class UserService
                         throw new RestException(HttpStatusCode.Unauthorized, "token", "is missing");
                     }
 
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new Details.Query(personId.Value), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<UserHandling>();
+                    return await handling.Get(
+                        new Details.Query(personId.Value),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token)
@@ -80,8 +81,11 @@ public static class UserService
                         user.Image = image;
                     }
 
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(new Edit.Command(user), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<UserHandling>();
+                    return await ctx.RunInTransactionAsync(
+                        () => handling.Update(user, CancellationToken.None),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),

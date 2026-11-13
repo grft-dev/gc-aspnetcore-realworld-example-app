@@ -20,7 +20,8 @@ public static class CommentHelpers
     /// <returns></returns>
     public static async Task<Domain.Comment> CreateComment(
         SliceFixture fixture,
-        Create.Command command,
+        Create.CommentData commentData,
+        string slug,
         string userName
     )
     {
@@ -39,16 +40,17 @@ public static class CommentHelpers
         var dbContext = fixture.GetDbContext();
         var currentAccessor = new StubCurrentUserAccessor(userName);
 
-        var commentCreateHandler = new Create.Handler(dbContext, currentAccessor);
-        var created = await commentCreateHandler.Handle(
-            command,
+        var commentsHandling = new CommentsHandling(dbContext, currentAccessor);
+        var created = await commentsHandling.Create(
+            commentData,
+            slug,
             new System.Threading.CancellationToken()
         );
 
         var dbArticleWithComments = await fixture.ExecuteDbContextAsync(db =>
             db.Articles.Include(a => a.Comments)
                 .Include(a => a.Author)
-                .Where(a => a.Slug == command.Slug)
+                .Where(a => a.Slug == slug)
                 .SingleOrDefaultAsync()
         );
 

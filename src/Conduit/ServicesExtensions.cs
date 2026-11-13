@@ -4,11 +4,15 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Conduit.Features.Articles;
+using Conduit.Features.Comments;
+using Conduit.Features.Favorites;
+using Conduit.Features.Followers;
 using Conduit.Features.Profiles;
+using Conduit.Features.Tags;
+using Conduit.Features.Users;
 using Conduit.Infrastructure;
 using Conduit.Infrastructure.Security;
-using FluentValidation;
-using Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +22,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
-using Details = Conduit.Features.Users.Details;
 
 namespace Conduit;
 
@@ -69,24 +72,20 @@ public static class ServicesExtensions
 
     public static void AddConduit(this IServiceCollection services)
     {
-        services.AddMediator(options =>
-        {
-            options.ServiceLifetime = ServiceLifetime.Scoped;
-            options.PipelineBehaviors =
-            [
-                typeof(ValidationPipelineBehavior<,>),
-                typeof(DBContextTransactionPipelineBehavior<,>),
-            ];
-        });
-
-        services.AddValidatorsFromAssemblyContaining<Details.QueryValidator>();
-
         services.AddSingleton<Features.ConduitMapper>();
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
         services.AddScoped<IProfileReader, ProfileReader>();
+        services.AddScoped<UsersHandling>();
+        services.AddScoped<UserHandling>();
+        services.AddScoped<ProfilesHandling>();
+        services.AddScoped<FollowersHandling>();
+        services.AddScoped<ArticlesHandling>();
+        services.AddScoped<FavoritesHandling>();
+        services.AddScoped<CommentsHandling>();
+        services.AddScoped<TagsHandling>();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
     }
 

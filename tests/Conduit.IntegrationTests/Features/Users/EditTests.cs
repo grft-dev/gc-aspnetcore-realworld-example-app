@@ -11,7 +11,7 @@ namespace Conduit.IntegrationTests.Features.Users;
 
 public class EditTests : SliceFixture
 {
-    private Edit.Handler CreateHandler(string currentUser) =>
+    private UserHandling CreateHandling(string currentUser) =>
         new(
             GetDbContext(),
             new PasswordHasher(),
@@ -26,18 +26,14 @@ public class EditTests : SliceFixture
     [Fact]
     public async Task Expect_Edit_User_Username_To_Duplicate_Throws_Conflict()
     {
-        await SendAsync(
-            new Create.Command(new Create.UserData("user1", "user1@example.com", "password1"))
-        );
-        await SendAsync(
-            new Create.Command(new Create.UserData("user2", "user2@example.com", "password2"))
-        );
+        await SendAsync(new Create.UserData("user1", "user1@example.com", "password1"));
+        await SendAsync(new Create.UserData("user2", "user2@example.com", "password2"));
 
         var userData = new Edit.UserData();
         userData.Username = "user1";
 
         var ex = await Assert.ThrowsAsync<RestException>(() =>
-            CreateHandler("user2").Handle(new Edit.Command(userData), default).AsTask()
+            CreateHandling("user2").Update(userData, default)
         );
 
         Assert.Equal(HttpStatusCode.Conflict, ex.Code);
@@ -46,18 +42,14 @@ public class EditTests : SliceFixture
     [Fact]
     public async Task Expect_Edit_User_Email_To_Duplicate_Throws_Conflict()
     {
-        await SendAsync(
-            new Create.Command(new Create.UserData("user3", "user3@example.com", "password3"))
-        );
-        await SendAsync(
-            new Create.Command(new Create.UserData("user4", "user4@example.com", "password4"))
-        );
+        await SendAsync(new Create.UserData("user3", "user3@example.com", "password3"));
+        await SendAsync(new Create.UserData("user4", "user4@example.com", "password4"));
 
         var userData = new Edit.UserData();
         userData.Email = "user3@example.com";
 
         var ex = await Assert.ThrowsAsync<RestException>(() =>
-            CreateHandler("user4").Handle(new Edit.Command(userData), default).AsTask()
+            CreateHandling("user4").Update(userData, default)
         );
 
         Assert.Equal(HttpStatusCode.Conflict, ex.Code);
@@ -66,14 +58,12 @@ public class EditTests : SliceFixture
     [Fact]
     public async Task Expect_Edit_User_Same_Username_Does_Not_Throw()
     {
-        await SendAsync(
-            new Create.Command(new Create.UserData("user5", "user5@example.com", "password5"))
-        );
+        await SendAsync(new Create.UserData("user5", "user5@example.com", "password5"));
 
         var userData = new Edit.UserData();
         userData.Username = "user5";
 
-        var result = await CreateHandler("user5").Handle(new Edit.Command(userData), default);
+        var result = await CreateHandling("user5").Update(userData, default);
 
         Assert.Equal("user5", result.User.Username);
     }
@@ -81,14 +71,12 @@ public class EditTests : SliceFixture
     [Fact]
     public async Task Expect_Edit_User_Same_Email_Does_Not_Throw()
     {
-        await SendAsync(
-            new Create.Command(new Create.UserData("user6", "user6@example.com", "password6"))
-        );
+        await SendAsync(new Create.UserData("user6", "user6@example.com", "password6"));
 
         var userData = new Edit.UserData();
         userData.Email = "user6@example.com";
 
-        var result = await CreateHandler("user6").Handle(new Edit.Command(userData), default);
+        var result = await CreateHandling("user6").Update(userData, default);
 
         Assert.Equal("user6@example.com", result.User.Email);
     }

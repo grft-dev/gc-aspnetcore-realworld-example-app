@@ -57,15 +57,13 @@ public class TokenIdentityTests
         scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>().HttpContext = http;
         var accessor = scope.ServiceProvider.GetRequiredService<ICurrentUserAccessor>();
         Assert.Equal(person.PersonId, accessor.GetCurrentPersonId());
-        var article = await new Conduit.Features.Articles.Create.Handler(db, accessor).Handle(
-            new Conduit.Features.Articles.Create.Command(
-                new Conduit.Features.Articles.Create.ArticleData
-                {
-                    Title = "After rename",
-                    Description = "d",
-                    Body = "b",
-                }
-            ),
+        var article = await new Conduit.Features.Articles.ArticlesHandling(db, accessor).Create(
+            new Conduit.Features.Articles.Create.ArticleData
+            {
+                Title = "After rename",
+                Description = "d",
+                Body = "b",
+            },
             default
         );
         Assert.Equal("after", article.Article.Author?.Username);

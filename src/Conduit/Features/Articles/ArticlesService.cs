@@ -1,9 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Infrastructure;
 using Graftcode.Pipeline;
-using Mediator;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Conduit.Features.Articles;
 
@@ -29,11 +28,11 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(
-                            new List.Query(tag, author, favorited, limit, offset),
-                            CancellationToken.None
-                        );
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    return await handling.List(
+                        new List.Query(tag, author, favorited, limit, offset),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),
@@ -59,11 +58,11 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    return await ctx.GetRequiredService<IMediator>()
-                        .Send(
-                            new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
-                            CancellationToken.None
-                        );
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    return await handling.List(
+                        new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),
@@ -82,8 +81,11 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var envelope = await ctx.GetRequiredService<IMediator>()
-                        .Send(new Details.Query(slug), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    var envelope = await handling.Details(
+                        new Details.Query(slug),
+                        CancellationToken.None
+                    );
                     return ArticleViews.From(envelope.Article);
                 }
             },
@@ -105,19 +107,21 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var envelope = await ctx.GetRequiredService<IMediator>()
-                        .Send(
-                            new Create.Command(
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    var envelope = await ctx.RunInTransactionAsync(
+                        () =>
+                            handling.Create(
                                 new Create.ArticleData
                                 {
                                     Title = title,
                                     Description = description,
                                     Body = body,
                                     TagList = SplitTags(tags),
-                                }
+                                },
+                                CancellationToken.None
                             ),
-                            CancellationToken.None
-                        );
+                        CancellationToken.None
+                    );
                     return ArticleViews.From(envelope.Article);
                 }
             },
@@ -154,8 +158,11 @@ public static class ArticlesService
                         article.TagList = SplitTags(tags);
                     }
 
-                    var envelope = await ctx.GetRequiredService<IMediator>()
-                        .Send(new Edit.Command(new Edit.Model(article), slug), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    var envelope = await ctx.RunInTransactionAsync(
+                        () => handling.Edit(article, slug, CancellationToken.None),
+                        CancellationToken.None
+                    );
                     return ArticleViews.From(envelope.Article);
                 }
             },
@@ -175,8 +182,11 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    await ctx.GetRequiredService<IMediator>()
-                        .Send(new Delete.Command(slug), CancellationToken.None);
+                    var handling = ctx.GetRequiredService<ArticlesHandling>();
+                    await ctx.RunInTransactionAsync(
+                        () => handling.Delete(slug, CancellationToken.None),
+                        CancellationToken.None
+                    );
                 }
             },
             ("token", token),
@@ -186,5 +196,8 @@ public static class ArticlesService
     private static string[]? SplitTags(string? tags) =>
         string.IsNullOrEmpty(tags)
             ? null
-            : tags.Split(',', System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries);
+            : tags.Split(
+                ',',
+                System.StringSplitOptions.RemoveEmptyEntries | System.StringSplitOptions.TrimEntries
+            );
 }

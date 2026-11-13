@@ -1,7 +1,7 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Infrastructure;
-using Mediator;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +32,7 @@ public class SliceFixture : IDisposable
     }
 
     // A dedicated scope supports older tests that construct handlers directly.
-    // Mediator and database helpers each use a fresh scoped context.
+    // Database helpers each use a fresh scoped context.
     public ConduitContext GetDbContext() =>
         _directScope.ServiceProvider.GetRequiredService<ConduitContext>();
 
@@ -55,20 +55,21 @@ public class SliceFixture : IDisposable
         return await action(scope.ServiceProvider);
     }
 
-    public ValueTask<TResponse> SendAsync<TResponse>(IRequest<TResponse> request) =>
-        ExecuteValueTaskScopeAsync(sp =>
-        {
-            var mediator = sp.GetRequiredService<IMediator>();
-
-            return mediator.Send(request);
-        });
-
-    public ValueTask SendAsync(IRequest request) =>
+    public ValueTask<TResponse> SendAsync<TResponse>(object request) =>
         ExecuteValueTaskScopeAsync(async sp =>
         {
-            var mediator = sp.GetRequiredService<IMediator>();
+            var response = await DispatchAsync(sp, request, CancellationToken.None);
+            return response is TResponse typed
+                ? typed
+                : throw new InvalidOperationException(
+                    $"Expected response of type '{typeof(TResponse).FullName}', got '{response?.GetType().FullName ?? "null"}'."
+                );
+        });
 
-            await mediator.Send(request);
+    public ValueTask SendAsync(object request) =>
+        ExecuteValueTaskScopeAsync(async sp =>
+        {
+            await DispatchAsync(sp, request, CancellationToken.None);
         });
 
     private async ValueTask<T> ExecuteValueTaskScopeAsync<T>(
@@ -100,4 +101,46 @@ public class SliceFixture : IDisposable
             }
             return db.SaveChangesAsync();
         });
+
+    private static async ValueTask<object?> DispatchAsync(
+        IServiceProvider services,
+        object request,
+        CancellationToken cancellationToken
+    ) =>
+        request switch
+        {
+            Conduit.Features.Users.Create.UserData user => await services
+                .GetRequiredService<Conduit.Features.Users.UsersHandling>()
+                .Register(user, cancellationToken),
+            Conduit.Features.Users.Login.Command command => await services
+                .GetRequiredService<Conduit.Features.Users.UsersHandling>()
+                .Login(command, cancellationToken),
+            Conduit.Features.Users.Edit.UserData user => await services
+                .GetRequiredService<Conduit.Features.Users.UserHandling>()
+                .Update(user, cancellationToken),
+            Conduit.Features.Users.Details.Query query => await services
+                .GetRequiredService<Conduit.Features.Users.UserHandling>()
+                .Get(query, cancellationToken),
+            Conduit.Features.Profiles.Details.Query query => await services
+                .GetRequiredService<Conduit.Features.Profiles.ProfilesHandling>()
+                .Get(query, cancellationToken),
+            Conduit.Features.Articles.Create.ArticleData articleData => await services
+                .GetRequiredService<Conduit.Features.Articles.ArticlesHandling>()
+                .Create(articleData, cancellationToken),
+            Conduit.Features.Articles.Details.Query query => await services
+                .GetRequiredService<Conduit.Features.Articles.ArticlesHandling>()
+                .Details(query, cancellationToken),
+            Conduit.Features.Articles.List.Query query => await services
+                .GetRequiredService<Conduit.Features.Articles.ArticlesHandling>()
+                .List(query, cancellationToken),
+            Conduit.Features.Comments.List.Query query => await services
+                .GetRequiredService<Conduit.Features.Comments.CommentsHandling>()
+                .List(query, cancellationToken),
+            Conduit.Features.Tags.List.Query query => await services
+                .GetRequiredService<Conduit.Features.Tags.TagsHandling>()
+                .List(query, cancellationToken),
+            _ => throw new InvalidOperationException(
+                $"Unsupported request type '{request.GetType().FullName}'."
+            ),
+        };
 }
