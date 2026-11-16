@@ -3,7 +3,6 @@ using Conduit;
 using Conduit.Infrastructure;
 using Conduit.Infrastructure.Errors;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,8 +25,6 @@ internal static class Program
                 }
             )
             : WebApplication.CreateBuilder(args);
-
-        builder.Host.UseContentRoot(contentRoot);
 
         builder.Services.AddConduitDatabase(builder.Configuration);
 
