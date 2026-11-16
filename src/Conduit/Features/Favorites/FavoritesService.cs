@@ -23,16 +23,17 @@ public static class FavoritesService
             nameof(FavoritesService),
             add ? nameof(Add) : nameof(Remove),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<FavoritesHandling>();
-                    var article = await (
-                        add
-                            ? handling.Add(slug, default)
-                            : handling.Remove(slug, default)
-                    );
-                    return ArticleViews.From(article);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<FavoritesHandling>();
+                        var article = await (
+                            add ? handling.Add(slug, default) : handling.Remove(slug, default)
+                        );
+                        return ArticleViews.From(article);
+                    }
+                ),
             ("token", token),
             ("slug", slug)
         );

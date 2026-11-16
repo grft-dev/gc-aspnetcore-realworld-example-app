@@ -1,6 +1,6 @@
-using Conduit.Domain;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Domain;
 using Conduit.Infrastructure;
 using Graftcode.Pipeline;
 
@@ -18,11 +18,14 @@ public static class ProfilesService
             nameof(ProfilesService),
             nameof(Get),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ProfilesHandling>();
-                    return await handling.Get(new Details.Query(username), default);
-                }),
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ProfilesHandling>();
+                        return await handling.Get(new Details.Query(username), default);
+                    }
+                ),
             ("token", token),
             ("username", username)
         );

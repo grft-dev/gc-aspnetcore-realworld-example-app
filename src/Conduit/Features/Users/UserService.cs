@@ -19,18 +19,25 @@ public static class UserService
             nameof(UserService),
             nameof(GetCurrent),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var personId = ctx.GetRequiredService<ICurrentUserAccessor>()
-                        .GetCurrentPersonId();
-                    if (personId is null)
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
                     {
-                        throw new RestException(HttpStatusCode.Unauthorized, "token", "is missing");
-                    }
+                        var personId = ctx.GetRequiredService<ICurrentUserAccessor>()
+                            .GetCurrentPersonId();
+                        if (personId is null)
+                        {
+                            throw new RestException(
+                                HttpStatusCode.Unauthorized,
+                                "token",
+                                "is missing"
+                            );
+                        }
 
-                    var handling = ctx.GetRequiredService<UserHandling>();
-                    return await handling.Get(new Details.Query(personId.Value), default);
-                }),
+                        var handling = ctx.GetRequiredService<UserHandling>();
+                        return await handling.Get(new Details.Query(personId.Value), default);
+                    }
+                ),
             ("token", token)
         );
 
@@ -46,37 +53,40 @@ public static class UserService
             nameof(UserService),
             nameof(Update),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var user = new EditUserData();
-                    if (username is not null)
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
                     {
-                        user.Username = username;
-                    }
+                        var user = new EditUserData();
+                        if (username is not null)
+                        {
+                            user.Username = username;
+                        }
 
-                    if (email is not null)
-                    {
-                        user.Email = email;
-                    }
+                        if (email is not null)
+                        {
+                            user.Email = email;
+                        }
 
-                    if (password is not null)
-                    {
-                        user.Password = password;
-                    }
+                        if (password is not null)
+                        {
+                            user.Password = password;
+                        }
 
-                    if (bio is not null)
-                    {
-                        user.Bio = bio;
-                    }
+                        if (bio is not null)
+                        {
+                            user.Bio = bio;
+                        }
 
-                    if (image is not null)
-                    {
-                        user.Image = image;
-                    }
+                        if (image is not null)
+                        {
+                            user.Image = image;
+                        }
 
-                    var handling = ctx.GetRequiredService<UserHandling>();
-                    return await handling.Update(user, default);
-                }),
+                        var handling = ctx.GetRequiredService<UserHandling>();
+                        return await handling.Update(user, default);
+                    }
+                ),
             ("token", token),
             ("username", username),
             ("email", email),

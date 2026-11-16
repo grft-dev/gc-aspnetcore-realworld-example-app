@@ -24,11 +24,17 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(List),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    return await handling.List(new List.Query(tag, author, favorited, limit, offset), default);
-                }),
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        return await handling.List(
+                            new List.Query(tag, author, favorited, limit, offset),
+                            default
+                        );
+                    }
+                ),
             ("token", token),
             ("tag", tag),
             ("author", author),
@@ -49,14 +55,17 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(Feed),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    return await handling.List(
-                        new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
-                        default
-                    );
-                }),
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        return await handling.List(
+                            new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
+                            default
+                        );
+                    }
+                ),
             ("token", token),
             ("tag", tag),
             ("author", author),
@@ -70,12 +79,15 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(Get),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var article = await handling.Details(new Details.Query(slug), default);
-                    return ArticleViews.From(article);
-                }),
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        var article = await handling.Details(new Details.Query(slug), default);
+                        return ArticleViews.From(article);
+                    }
+                ),
             ("token", token),
             ("slug", slug)
         );
@@ -91,21 +103,24 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(Create),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var article = await handling.Create(
-                        new CreateArticleData
-                        {
-                            Title = title,
-                            Description = description,
-                            Body = body,
-                            TagList = SplitTags(tags),
-                        },
-                        default
-                    );
-                    return ArticleViews.From(article);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        var article = await handling.Create(
+                            new CreateArticleData
+                            {
+                                Title = title,
+                                Description = description,
+                                Body = body,
+                                TagList = SplitTags(tags),
+                            },
+                            default
+                        );
+                        return ArticleViews.From(article);
+                    }
+                ),
             ("token", token),
             ("title", title),
             ("description", description),
@@ -125,23 +140,26 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(Edit),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var article = new EditArticleData
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
                     {
-                        Title = title,
-                        Description = description,
-                        Body = body,
-                    };
-                    if (tags is not null)
-                    {
-                        article.TagList = SplitTags(tags);
-                    }
+                        var article = new EditArticleData
+                        {
+                            Title = title,
+                            Description = description,
+                            Body = body,
+                        };
+                        if (tags is not null)
+                        {
+                            article.TagList = SplitTags(tags);
+                        }
 
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var updatedArticle = await handling.Edit(article, slug, default);
-                    return ArticleViews.From(updatedArticle);
-                }),
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        var updatedArticle = await handling.Edit(article, slug, default);
+                        return ArticleViews.From(updatedArticle);
+                    }
+                ),
             ("token", token),
             ("slug", slug),
             ("title", title),
@@ -155,11 +173,14 @@ public static class ArticlesService
             nameof(ArticlesService),
             nameof(Delete),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    await handling.Delete(slug, default);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<ArticlesHandling>();
+                        await handling.Delete(slug, default);
+                    }
+                ),
             ("token", token),
             ("slug", slug)
         );

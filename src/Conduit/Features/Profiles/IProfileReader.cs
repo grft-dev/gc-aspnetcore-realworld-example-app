@@ -1,6 +1,6 @@
-using Conduit.Domain;
 using System.Threading;
 using System.Threading.Tasks;
+using Conduit.Domain;
 
 namespace Conduit.Features.Profiles;
 

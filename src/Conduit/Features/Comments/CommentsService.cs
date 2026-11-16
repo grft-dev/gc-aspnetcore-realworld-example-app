@@ -27,12 +27,19 @@ public static class CommentsService
             nameof(CommentsService),
             nameof(Create),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<CommentsHandling>();
-                    var comment = await handling.Create(new CreateCommentData(body), slug, default);
-                    return From(comment);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<CommentsHandling>();
+                        var comment = await handling.Create(
+                            new CreateCommentData(body),
+                            slug,
+                            default
+                        );
+                        return From(comment);
+                    }
+                ),
             ("token", token),
             ("slug", slug),
             ("body", body)
@@ -43,12 +50,15 @@ public static class CommentsService
             nameof(CommentsService),
             nameof(List),
             ctx =>
-                ctx.RunAuthorizedAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<CommentsHandling>();
-                    var comments = await handling.List(new List.Query(slug), default);
-                    return comments.Select(From).ToArray();
-                }),
+                ctx.RunAuthorizedAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<CommentsHandling>();
+                        var comments = await handling.List(new List.Query(slug), default);
+                        return comments.Select(From).ToArray();
+                    }
+                ),
             ("token", token),
             ("slug", slug)
         );
@@ -58,11 +68,14 @@ public static class CommentsService
             nameof(CommentsService),
             nameof(Delete),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<CommentsHandling>();
-                    await handling.Delete(slug, id, default);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<CommentsHandling>();
+                        await handling.Delete(slug, id, default);
+                    }
+                ),
             ("token", token),
             ("slug", slug),
             ("id", id)

@@ -19,10 +19,7 @@ public sealed class UsersHandling(
     ConduitMapper mapper
 )
 {
-    public async Task<User> Register(
-        RegisterUserData userData,
-        CancellationToken cancellationToken
-    )
+    public async Task<User> Register(RegisterUserData userData, CancellationToken cancellationToken)
     {
         if (
             await context
@@ -57,10 +54,7 @@ public sealed class UsersHandling(
         return user;
     }
 
-    public async Task<User> Login(
-        Login.Command message,
-        CancellationToken cancellationToken
-    )
+    public async Task<User> Login(Login.Command message, CancellationToken cancellationToken)
     {
         var person = await context
             .Persons.Where(x => x.Email == message.User.Email)

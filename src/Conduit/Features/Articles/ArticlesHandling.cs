@@ -98,10 +98,7 @@ public sealed class ArticlesHandling(
         return new ArticlesEnvelope { Articles = articles, ArticlesCount = count };
     }
 
-    public async Task<Article> Details(
-        Details.Query message,
-        CancellationToken cancellationToken
-    )
+    public async Task<Article> Details(Details.Query message, CancellationToken cancellationToken)
     {
         var article = await context
             .Articles.GetAllData()

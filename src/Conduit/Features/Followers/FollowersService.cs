@@ -19,11 +19,14 @@ public static class FollowersService
             nameof(FollowersService),
             nameof(Follow),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<FollowersHandling>();
-                    return await handling.Follow(username, default);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<FollowersHandling>();
+                        return await handling.Follow(username, default);
+                    }
+                ),
             ("token", token),
             ("username", username)
         );
@@ -33,11 +36,14 @@ public static class FollowersService
             nameof(FollowersService),
             nameof(Unfollow),
             ctx =>
-                ctx.RunAuthorizedTransactionAsync(token, async () =>
-                {
-                    var handling = ctx.GetRequiredService<FollowersHandling>();
-                    return await handling.Unfollow(username, default);
-                }),
+                ctx.RunAuthorizedTransactionAsync(
+                    token,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<FollowersHandling>();
+                        return await handling.Unfollow(username, default);
+                    }
+                ),
             ("token", token),
             ("username", username)
         );

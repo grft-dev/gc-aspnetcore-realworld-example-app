@@ -28,7 +28,12 @@ public static class JwtPersonIdentity
             || identity.FindAll("conduit_token_version").Count() != 1
             || identity.FindFirst("conduit_token_version")?.Value != "2"
             || !subject.Value.StartsWith("user:", StringComparison.Ordinal)
-            || !int.TryParse(subject.Value[5..], NumberStyles.None, CultureInfo.InvariantCulture, out personId)
+            || !int.TryParse(
+                subject.Value[5..],
+                NumberStyles.None,
+                CultureInfo.InvariantCulture,
+                out personId
+            )
             || personId <= 0
         )
         {

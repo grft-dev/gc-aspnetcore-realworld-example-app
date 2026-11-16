@@ -19,8 +19,8 @@ public static class UsersService
             async ctx =>
             {
                 var handling = ctx.GetRequiredService<UsersHandling>();
-                return await ctx.RunInTransactionAsync(
-                    () => handling.Register(new RegisterUserData(username, email, password), default)
+                return await ctx.RunInTransactionAsync(() =>
+                    handling.Register(new RegisterUserData(username, email, password), default)
                 );
             },
             ("username", username),
@@ -35,12 +35,13 @@ public static class UsersService
             async ctx =>
             {
                 var handling = ctx.GetRequiredService<UsersHandling>();
-                return await ctx.RunInTransactionAsync(
-                    () =>
-                        handling.Login(
-                            new Login.Command(new Login.UserData { Email = email, Password = password }),
-                            default
-                        )
+                return await ctx.RunInTransactionAsync(() =>
+                    handling.Login(
+                        new Login.Command(
+                            new Login.UserData { Email = email, Password = password }
+                        ),
+                        default
+                    )
                 );
             },
             ("email", email),

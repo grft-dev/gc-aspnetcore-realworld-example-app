@@ -33,10 +33,7 @@ public sealed class UserHandling(
         return user;
     }
 
-    public async Task<User> Update(
-        EditUserData userData,
-        CancellationToken cancellationToken
-    )
+    public async Task<User> Update(EditUserData userData, CancellationToken cancellationToken)
     {
         var currentPersonId = currentUserAccessor.GetCurrentPersonId();
         var person = await context

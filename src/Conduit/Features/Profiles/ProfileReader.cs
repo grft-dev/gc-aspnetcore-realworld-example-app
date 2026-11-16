@@ -15,10 +15,7 @@ public class ProfileReader(
     ConduitMapper mapper
 ) : IProfileReader
 {
-    public async Task<Profile> ReadProfile(
-        string username,
-        CancellationToken cancellationToken
-    )
+    public async Task<Profile> ReadProfile(string username, CancellationToken cancellationToken)
     {
         var currentPersonId = currentUserAccessor.GetCurrentPersonId();
 

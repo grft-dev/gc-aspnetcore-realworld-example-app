@@ -18,10 +18,13 @@ public static class TagsService
             nameof(TagsService),
             nameof(List),
             ctx =>
-                ctx.RunAuthorizedAsync(null, async () =>
-                {
-                    var handling = ctx.GetRequiredService<TagsHandling>();
-                    return await handling.List(new List.Query(), default);
-                })
+                ctx.RunAuthorizedAsync(
+                    null,
+                    async () =>
+                    {
+                        var handling = ctx.GetRequiredService<TagsHandling>();
+                        return await handling.List(new List.Query(), default);
+                    }
+                )
         );
 }

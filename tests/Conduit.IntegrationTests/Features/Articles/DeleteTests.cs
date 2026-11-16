@@ -97,9 +97,7 @@ public class DeleteTests : SliceFixture
         var slug = dbArticle.Slug;
 
         // create article comment
-        var createCommentData = new Conduit.Features.Comments.CreateCommentData(
-            "article comment"
-        );
+        var createCommentData = new Conduit.Features.Comments.CreateCommentData("article comment");
 
         var comment = await CommentHelpers.CreateComment(
             this,

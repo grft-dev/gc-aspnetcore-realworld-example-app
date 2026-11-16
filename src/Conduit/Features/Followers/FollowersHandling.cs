@@ -58,10 +58,7 @@ public sealed class FollowersHandling(
         return await profileReader.ReadProfile(username, cancellationToken);
     }
 
-    public async Task<Profile> Unfollow(
-        string username,
-        CancellationToken cancellationToken
-    )
+    public async Task<Profile> Unfollow(string username, CancellationToken cancellationToken)
     {
         var target = await context.Persons.FirstOrDefaultAsync(
             x => x.Username == username,

@@ -52,10 +52,7 @@ public sealed class CommentsHandling(
         return comment;
     }
 
-    public async Task<List<Comment>> List(
-        List.Query message,
-        CancellationToken cancellationToken
-    )
+    public async Task<List<Comment>> List(List.Query message, CancellationToken cancellationToken)
     {
         var article = await context
             .Articles.Include(x => x.Comments)
