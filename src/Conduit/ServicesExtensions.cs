@@ -70,6 +70,7 @@ public static class ServicesExtensions
 
     public static void AddConduit(this IServiceCollection services)
     {
+        services.AddLocalization();
         services.AddSingleton<Features.ConduitMapper>();
 
         services.AddScoped<IPasswordHasher, PasswordHasher>();
