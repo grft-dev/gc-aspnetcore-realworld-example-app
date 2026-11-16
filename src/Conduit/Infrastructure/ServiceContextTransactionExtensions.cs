@@ -7,6 +7,11 @@ namespace Conduit.Infrastructure;
 
 public static class ServiceContextTransactionExtensions
 {
+    public static Task<T> RunInTransactionAsync<T>(
+        this ServiceContext context,
+        Func<Task<T>> operation
+    ) => context.RunInTransactionAsync(operation, CancellationToken.None);
+
     public static async Task<T> RunInTransactionAsync<T>(
         this ServiceContext context,
         Func<Task<T>> operation,
@@ -27,6 +32,9 @@ public static class ServiceContextTransactionExtensions
             throw;
         }
     }
+
+    public static Task RunInTransactionAsync(this ServiceContext context, Func<Task> operation) =>
+        context.RunInTransactionAsync(operation, CancellationToken.None);
 
     public static async Task RunInTransactionAsync(
         this ServiceContext context,

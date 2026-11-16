@@ -1,4 +1,3 @@
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
 using Conduit.Features.Articles;
@@ -23,21 +22,17 @@ public static class FavoritesService
         ServicePipeline.RunAsync(
             nameof(FavoritesService),
             add ? nameof(Add) : nameof(Remove),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<FavoritesHandling>();
-                    var envelope = await ctx.RunInTransactionAsync(
-                        () =>
-                            add
-                                ? handling.Add(slug, CancellationToken.None)
-                                : handling.Remove(slug, CancellationToken.None),
-                        CancellationToken.None
+                    var article = await (
+                        add
+                            ? handling.Add(slug, default)
+                            : handling.Remove(slug, default)
                     );
-                    return ArticleViews.From(envelope.Article);
-                }
-            },
+                    return ArticleViews.From(article);
+                }),
             ("token", token),
             ("slug", slug)
         );

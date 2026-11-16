@@ -26,11 +26,11 @@ public class LoginTests : SliceFixture
             new Login.UserData { Email = "email", Password = "password" }
         );
 
-        var user = await SendAsync<UserEnvelope>(command);
+        var user = await SendAsync<User>(command);
 
-        Assert.NotNull(user?.User);
-        Assert.Equal(user.User.Email, command.User.Email);
-        Assert.Equal("username", user.User.Username);
-        Assert.NotNull(user.User.Token);
+        Assert.NotNull(user);
+        Assert.Equal(user.Email, command.User.Email);
+        Assert.Equal("username", user.Username);
+        Assert.NotNull(user.Token);
     }
 }

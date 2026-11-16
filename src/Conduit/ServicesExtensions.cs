@@ -1,7 +1,5 @@
 using System;
-using System.Globalization;
 using System.Linq;
-using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Conduit.Features.Articles;
@@ -159,22 +157,7 @@ public static class ServicesExtensions
                 {
                     OnTokenValidated = async context =>
                     {
-                        var identity = context.Principal?.Identity as ClaimsIdentity;
-                        var subject = identity?.FindFirst("sub");
-                        if (
-                            subject is null
-                            || identity!.FindAll("sub").Count() != 1
-                            || identity.FindAll("conduit_token_version").Count() != 1
-                            || identity.FindFirst("conduit_token_version")?.Value != "2"
-                            || !subject.Value.StartsWith("user:", StringComparison.Ordinal)
-                            || !int.TryParse(
-                                subject.Value[5..],
-                                NumberStyles.None,
-                                CultureInfo.InvariantCulture,
-                                out var personId
-                            )
-                            || personId <= 0
-                        )
+                        if (!JwtPersonIdentity.TryGetPersonId(context.Principal, out var personId))
                         {
                             context.Fail("Invalid user identity");
                             return;
@@ -182,8 +165,9 @@ public static class ServicesExtensions
                         var db =
                             context.HttpContext.RequestServices.GetRequiredService<ConduitContext>();
                         if (
-                            !await db.Persons.AnyAsync(
-                                x => x.PersonId == personId,
+                            !await JwtPersonIdentity.PersonExistsAsync(
+                                db,
+                                personId,
                                 context.HttpContext.RequestAborted
                             )
                         )

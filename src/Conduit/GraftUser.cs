@@ -1,14 +1,11 @@
 using System;
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Conduit.Infrastructure;
 using Conduit.Infrastructure.Security;
 using Graftcode.Pipeline;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -57,28 +54,13 @@ internal static class GraftUser
             out _
         );
 
-        var identity = principal.Identity as ClaimsIdentity;
-        var subject = identity?.FindFirst("sub");
-        if (
-            subject is null
-            || identity!.FindAll("sub").Count() != 1
-            || identity.FindAll("conduit_token_version").Count() != 1
-            || identity.FindFirst("conduit_token_version")?.Value != "2"
-            || !subject.Value.StartsWith("user:", StringComparison.Ordinal)
-            || !int.TryParse(
-                subject.Value[5..],
-                NumberStyles.None,
-                CultureInfo.InvariantCulture,
-                out var personId
-            )
-            || personId <= 0
-        )
+        if (!JwtPersonIdentity.TryGetPersonId(principal, out var personId))
         {
             throw new SecurityTokenException("Invalid user identity");
         }
 
         var database = context.GetRequiredService<ConduitContext>();
-        if (!await database.Persons.AnyAsync(person => person.PersonId == personId))
+        if (!await JwtPersonIdentity.PersonExistsAsync(database, personId))
         {
             throw new SecurityTokenException("User no longer exists");
         }

@@ -65,7 +65,7 @@ public class EditTests : SliceFixture
 
         var result = await CreateHandling("user5").Update(userData, default);
 
-        Assert.Equal("user5", result.User.Username);
+        Assert.Equal("user5", result.Username);
     }
 
     [Fact]
@@ -78,6 +78,6 @@ public class EditTests : SliceFixture
 
         var result = await CreateHandling("user6").Update(userData, default);
 
-        Assert.Equal("user6@example.com", result.User.Email);
+        Assert.Equal("user6@example.com", result.Email);
     }
 }

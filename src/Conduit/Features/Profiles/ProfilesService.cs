@@ -1,6 +1,7 @@
-using System.Threading;
+using Conduit.Domain;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Infrastructure;
 using Graftcode.Pipeline;
 
 namespace Conduit.Features.Profiles;
@@ -12,18 +13,16 @@ public static class ProfilesService
         ServicePipeline.Use(() => GraftHost.Services);
     }
 
-    public static Task<ProfileEnvelope> Get(string? token, string username) =>
+    public static Task<Profile> Get(string? token, string username) =>
         ServicePipeline.RunAsync(
             nameof(ProfilesService),
             nameof(Get),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ProfilesHandling>();
-                    return await handling.Get(new Details.Query(username), CancellationToken.None);
-                }
-            },
+                    return await handling.Get(new Details.Query(username), default);
+                }),
             ("token", token),
             ("username", username)
         );

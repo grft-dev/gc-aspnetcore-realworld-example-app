@@ -40,9 +40,9 @@ public class TagPersistenceTests
             "article",
             default
         );
-        Assert.Equal(2, result.Article.TagList.Count);
-        Assert.Contains("existing", result.Article.TagList);
-        Assert.Contains("new", result.Article.TagList);
+        Assert.Equal(2, result.TagList.Count);
+        Assert.Contains("existing", result.TagList);
+        Assert.Contains("new", result.TagList);
         context.ChangeTracker.Clear();
         Assert.Equal(2, await context.Tags.CountAsync());
         Assert.Equal(2, await context.ArticleTags.CountAsync());

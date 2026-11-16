@@ -2,6 +2,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Conduit.Domain;
 using Conduit.Infrastructure;
 using Conduit.Infrastructure.Errors;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +15,7 @@ public class ProfileReader(
     ConduitMapper mapper
 ) : IProfileReader
 {
-    public async Task<ProfileEnvelope> ReadProfile(
+    public async Task<Profile> ReadProfile(
         string username,
         CancellationToken cancellationToken
     )
@@ -49,6 +50,6 @@ public class ProfileReader(
             }
         }
 
-        return new ProfileEnvelope(profile);
+        return profile;
     }
 }

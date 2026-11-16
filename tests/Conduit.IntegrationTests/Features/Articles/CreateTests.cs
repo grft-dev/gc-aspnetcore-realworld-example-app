@@ -35,7 +35,7 @@ public class CreateTests : SliceFixture
             },
             default
         );
-        Assert.Equal("x", Assert.Single(result.Article.TagList));
+        Assert.Equal("x", Assert.Single(result.TagList));
     }
 
     [Fact]

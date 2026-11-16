@@ -1,5 +1,4 @@
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
 using Conduit.Infrastructure;
@@ -15,13 +14,12 @@ public static class UserService
         ServicePipeline.Use(() => GraftHost.Services);
     }
 
-    public static Task<UserEnvelope> GetCurrent(string token) =>
+    public static Task<User> GetCurrent(string token) =>
         ServicePipeline.RunAsync(
             nameof(UserService),
             nameof(GetCurrent),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var personId = ctx.GetRequiredService<ICurrentUserAccessor>()
                         .GetCurrentPersonId();
@@ -31,16 +29,12 @@ public static class UserService
                     }
 
                     var handling = ctx.GetRequiredService<UserHandling>();
-                    return await handling.Get(
-                        new Details.Query(personId.Value),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    return await handling.Get(new Details.Query(personId.Value), default);
+                }),
             ("token", token)
         );
 
-    public static Task<UserEnvelope> Update(
+    public static Task<User> Update(
         string token,
         string? username,
         string? email,
@@ -51,9 +45,8 @@ public static class UserService
         ServicePipeline.RunAsync(
             nameof(UserService),
             nameof(Update),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var user = new EditUserData();
                     if (username is not null)
@@ -82,12 +75,8 @@ public static class UserService
                     }
 
                     var handling = ctx.GetRequiredService<UserHandling>();
-                    return await ctx.RunInTransactionAsync(
-                        () => handling.Update(user, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    return await handling.Update(user, default);
+                }),
             ("token", token),
             ("username", username),
             ("email", email),

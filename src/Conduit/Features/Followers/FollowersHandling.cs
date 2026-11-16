@@ -15,7 +15,7 @@ public sealed class FollowersHandling(
     IProfileReader profileReader
 )
 {
-    public async Task<ProfileEnvelope> Follow(string username, CancellationToken cancellationToken)
+    public async Task<Profile> Follow(string username, CancellationToken cancellationToken)
     {
         var target = await context.Persons.FirstOrDefaultAsync(
             x => x.Username == username,
@@ -58,7 +58,7 @@ public sealed class FollowersHandling(
         return await profileReader.ReadProfile(username, cancellationToken);
     }
 
-    public async Task<ProfileEnvelope> Unfollow(
+    public async Task<Profile> Unfollow(
         string username,
         CancellationToken cancellationToken
     )

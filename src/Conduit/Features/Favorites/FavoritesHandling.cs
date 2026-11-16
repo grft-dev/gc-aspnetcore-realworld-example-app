@@ -14,7 +14,7 @@ public sealed class FavoritesHandling(
     ICurrentUserAccessor currentUserAccessor
 )
 {
-    public async Task<ArticleEnvelope> Add(string slug, CancellationToken cancellationToken)
+    public async Task<Article> Add(string slug, CancellationToken cancellationToken)
     {
         var article = await context.Articles.FirstOrDefaultAsync(
             x => x.Slug == slug,
@@ -63,10 +63,10 @@ public sealed class FavoritesHandling(
         }
 
         new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
-        return new ArticleEnvelope(article);
+        return article;
     }
 
-    public async Task<ArticleEnvelope> Remove(string slug, CancellationToken cancellationToken)
+    public async Task<Article> Remove(string slug, CancellationToken cancellationToken)
     {
         var article =
             await context.Articles.FirstOrDefaultAsync(x => x.Slug == slug, cancellationToken)
@@ -101,6 +101,6 @@ public sealed class FavoritesHandling(
         }
 
         new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
-        return new ArticleEnvelope(article);
+        return article;
     }
 }

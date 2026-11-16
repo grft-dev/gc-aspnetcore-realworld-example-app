@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <RootNamespace>Conduit.Graft</RootNamespace>
-  </PropertyGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Conduit\Conduit.csproj" />
-    <PackageReference Include="Graftcode.Pipeline" />
-  </ItemGroup>
-</Project>

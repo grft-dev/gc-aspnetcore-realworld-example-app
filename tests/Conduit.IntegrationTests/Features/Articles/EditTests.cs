@@ -44,10 +44,10 @@ public class EditTests : SliceFixture
         );
 
         Assert.NotNull(edited);
-        Assert.Equal(edited.Article.Title, command.Title);
-        Assert.Equal(edited.Article.TagList.Count, command.TagList?.Count() ?? 0);
+        Assert.Equal(edited.Title, command.Title);
+        Assert.Equal(edited.TagList.Count, command.TagList?.Count() ?? 0);
         // use assert Contains because we do not know the order in which the tags are saved/retrieved
-        Assert.Contains(edited.Article.TagList[0], command.TagList ?? []);
-        Assert.Contains(edited.Article.TagList[1], command.TagList ?? []);
+        Assert.Contains(edited.TagList[0], command.TagList ?? []);
+        Assert.Contains(edited.TagList[1], command.TagList ?? []);
     }
 }

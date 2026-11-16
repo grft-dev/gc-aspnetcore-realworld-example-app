@@ -66,8 +66,8 @@ public class TokenIdentityTests
             },
             default
         );
-        Assert.Equal("after", article.Article.Author?.Username);
-        Assert.Equal(person.PersonId, article.Article.Author?.PersonId);
+        Assert.Equal("after", article.Author?.Username);
+        Assert.Equal(person.PersonId, article.Author?.PersonId);
         db.Remove(person);
         await db.SaveChangesAsync();
         await using var deletedScope = provider.CreateAsyncScope();

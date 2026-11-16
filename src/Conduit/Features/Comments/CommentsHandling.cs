@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading;
@@ -15,7 +16,7 @@ public sealed class CommentsHandling(
     ICurrentUserAccessor currentUserAccessor
 )
 {
-    public async Task<CommentEnvelope> Create(
+    public async Task<Comment> Create(
         CreateCommentData commentData,
         string slug,
         CancellationToken cancellationToken
@@ -48,10 +49,10 @@ public sealed class CommentsHandling(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        return new CommentEnvelope(comment);
+        return comment;
     }
 
-    public async Task<CommentsEnvelope> List(
+    public async Task<List<Comment>> List(
         List.Query message,
         CancellationToken cancellationToken
     )
@@ -66,7 +67,7 @@ public sealed class CommentsHandling(
             throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
         }
 
-        return new CommentsEnvelope(article.Comments);
+        return article.Comments;
     }
 
     public async Task Delete(string slug, int id, CancellationToken cancellationToken)

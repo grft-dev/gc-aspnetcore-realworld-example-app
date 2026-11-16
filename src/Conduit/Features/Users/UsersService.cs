@@ -1,4 +1,3 @@
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
 using Conduit.Infrastructure;
@@ -13,7 +12,7 @@ public static class UsersService
         ServicePipeline.Use(() => GraftHost.Services);
     }
 
-    public static Task<UserEnvelope> Register(string username, string email, string password) =>
+    public static Task<User> Register(string username, string email, string password) =>
         ServicePipeline.RunAsync(
             nameof(UsersService),
             nameof(Register),
@@ -21,12 +20,7 @@ public static class UsersService
             {
                 var handling = ctx.GetRequiredService<UsersHandling>();
                 return await ctx.RunInTransactionAsync(
-                    () =>
-                        handling.Register(
-                            new RegisterUserData(username, email, password),
-                            CancellationToken.None
-                        ),
-                    CancellationToken.None
+                    () => handling.Register(new RegisterUserData(username, email, password), default)
                 );
             },
             ("username", username),
@@ -34,7 +28,7 @@ public static class UsersService
             ("password", password)
         );
 
-    public static Task<UserEnvelope> Login(string email, string password) =>
+    public static Task<User> Login(string email, string password) =>
         ServicePipeline.RunAsync(
             nameof(UsersService),
             nameof(Login),
@@ -44,12 +38,9 @@ public static class UsersService
                 return await ctx.RunInTransactionAsync(
                     () =>
                         handling.Login(
-                            new Login.Command(
-                                new Login.UserData { Email = email, Password = password }
-                            ),
-                            CancellationToken.None
-                        ),
-                    CancellationToken.None
+                            new Login.Command(new Login.UserData { Email = email, Password = password }),
+                            default
+                        )
                 );
             },
             ("email", email),

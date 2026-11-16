@@ -1,4 +1,3 @@
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
 using Conduit.Infrastructure;
@@ -24,17 +23,12 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(List),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    return await handling.List(
-                        new List.Query(tag, author, favorited, limit, offset),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    return await handling.List(new List.Query(tag, author, favorited, limit, offset), default);
+                }),
             ("token", token),
             ("tag", tag),
             ("author", author),
@@ -54,17 +48,15 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(Feed),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
                     return await handling.List(
                         new List.Query(tag, author, favorited, limit, offset) { IsFeed = true },
-                        CancellationToken.None
+                        default
                     );
-                }
-            },
+                }),
             ("token", token),
             ("tag", tag),
             ("author", author),
@@ -77,18 +69,13 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(Get),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var envelope = await handling.Details(
-                        new Details.Query(slug),
-                        CancellationToken.None
-                    );
-                    return ArticleViews.From(envelope.Article);
-                }
-            },
+                    var article = await handling.Details(new Details.Query(slug), default);
+                    return ArticleViews.From(article);
+                }),
             ("token", token),
             ("slug", slug)
         );
@@ -103,28 +90,22 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(Create),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var envelope = await ctx.RunInTransactionAsync(
-                        () =>
-                            handling.Create(
-                                new CreateArticleData
-                                {
-                                    Title = title,
-                                    Description = description,
-                                    Body = body,
-                                    TagList = SplitTags(tags),
-                                },
-                                CancellationToken.None
-                            ),
-                        CancellationToken.None
+                    var article = await handling.Create(
+                        new CreateArticleData
+                        {
+                            Title = title,
+                            Description = description,
+                            Body = body,
+                            TagList = SplitTags(tags),
+                        },
+                        default
                     );
-                    return ArticleViews.From(envelope.Article);
-                }
-            },
+                    return ArticleViews.From(article);
+                }),
             ("token", token),
             ("title", title),
             ("description", description),
@@ -143,9 +124,8 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(Edit),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var article = new EditArticleData
                     {
@@ -159,13 +139,9 @@ public static class ArticlesService
                     }
 
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    var envelope = await ctx.RunInTransactionAsync(
-                        () => handling.Edit(article, slug, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                    return ArticleViews.From(envelope.Article);
-                }
-            },
+                    var updatedArticle = await handling.Edit(article, slug, default);
+                    return ArticleViews.From(updatedArticle);
+                }),
             ("token", token),
             ("slug", slug),
             ("title", title),
@@ -178,17 +154,12 @@ public static class ArticlesService
         ServicePipeline.RunAsync(
             nameof(ArticlesService),
             nameof(Delete),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<ArticlesHandling>();
-                    await ctx.RunInTransactionAsync(
-                        () => handling.Delete(slug, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    await handling.Delete(slug, default);
+                }),
             ("token", token),
             ("slug", slug)
         );

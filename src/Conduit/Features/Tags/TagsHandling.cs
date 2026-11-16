@@ -9,15 +9,12 @@ namespace Conduit.Features.Tags;
 
 public sealed class TagsHandling(ConduitContext context)
 {
-    public async Task<TagsEnvelope> List(List.Query _, CancellationToken cancellationToken)
+    public async Task<List<string>> List(List.Query _, CancellationToken cancellationToken)
     {
         var tags = await context
             .Tags.OrderBy(x => x.TagId)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
-        return new TagsEnvelope
-        {
-            Tags = tags?.Select(x => x.TagId ?? string.Empty).ToList() ?? new List<string>(),
-        };
+        return tags?.Select(x => x.TagId ?? string.Empty).ToList() ?? [];
     }
 }

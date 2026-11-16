@@ -98,7 +98,7 @@ public sealed class ArticlesHandling(
         return new ArticlesEnvelope { Articles = articles, ArticlesCount = count };
     }
 
-    public async Task<ArticleEnvelope> Details(
+    public async Task<Article> Details(
         Details.Query message,
         CancellationToken cancellationToken
     )
@@ -112,10 +112,10 @@ public sealed class ArticlesHandling(
             throw new RestException(HttpStatusCode.NotFound, "article", Constants.NOT_FOUND);
         }
         new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
-        return new ArticleEnvelope(article);
+        return article;
     }
 
-    public async Task<ArticleEnvelope> Create(
+    public async Task<Article> Create(
         CreateArticleData articleData,
         CancellationToken cancellationToken
     )
@@ -167,10 +167,10 @@ public sealed class ArticlesHandling(
 
         await context.SaveChangesAsync(cancellationToken);
 
-        return new ArticleEnvelope(article);
+        return article;
     }
 
-    public async Task<ArticleEnvelope> Edit(
+    public async Task<Article> Edit(
         EditArticleData articleData,
         string articleSlug,
         CancellationToken cancellationToken
@@ -259,7 +259,7 @@ public sealed class ArticlesHandling(
         }
 
         new[] { article }.PopulateFavorited(currentUserAccessor.GetCurrentPersonId());
-        return new ArticleEnvelope(article);
+        return article;
     }
 
     public async Task Delete(string slug, CancellationToken cancellationToken)

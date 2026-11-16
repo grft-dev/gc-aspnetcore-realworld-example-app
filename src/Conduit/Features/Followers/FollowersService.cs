@@ -1,6 +1,6 @@
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
+using Conduit.Domain;
 using Conduit.Features.Profiles;
 using Conduit.Infrastructure;
 using Graftcode.Pipeline;
@@ -14,40 +14,30 @@ public static class FollowersService
         ServicePipeline.Use(() => GraftHost.Services);
     }
 
-    public static Task<ProfileEnvelope> Follow(string token, string username) =>
+    public static Task<Profile> Follow(string token, string username) =>
         ServicePipeline.RunAsync(
             nameof(FollowersService),
             nameof(Follow),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<FollowersHandling>();
-                    return await ctx.RunInTransactionAsync(
-                        () => handling.Follow(username, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    return await handling.Follow(username, default);
+                }),
             ("token", token),
             ("username", username)
         );
 
-    public static Task<ProfileEnvelope> Unfollow(string token, string username) =>
+    public static Task<Profile> Unfollow(string token, string username) =>
         ServicePipeline.RunAsync(
             nameof(FollowersService),
             nameof(Unfollow),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<FollowersHandling>();
-                    return await ctx.RunInTransactionAsync(
-                        () => handling.Unfollow(username, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    return await handling.Unfollow(username, default);
+                }),
             ("token", token),
             ("username", username)
         );

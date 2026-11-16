@@ -19,7 +19,7 @@ public sealed class UsersHandling(
     ConduitMapper mapper
 )
 {
-    public async Task<UserEnvelope> Register(
+    public async Task<User> Register(
         RegisterUserData userData,
         CancellationToken cancellationToken
     )
@@ -54,10 +54,10 @@ public sealed class UsersHandling(
 
         var user = mapper.PersonToUser(person);
         user.Token = jwtTokenGenerator.CreateToken(person.PersonId);
-        return new UserEnvelope(user);
+        return user;
     }
 
-    public async Task<UserEnvelope> Login(
+    public async Task<User> Login(
         Login.Command message,
         CancellationToken cancellationToken
     )
@@ -90,6 +90,6 @@ public sealed class UsersHandling(
 
         var user = mapper.PersonToUser(person);
         user.Token = jwtTokenGenerator.CreateToken(person.PersonId);
-        return new UserEnvelope(user);
+        return user;
     }
 }

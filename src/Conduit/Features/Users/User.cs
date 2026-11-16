@@ -12,5 +12,3 @@ public class User
 
     public string? Token { get; set; }
 }
-
-public record UserEnvelope(User User);

@@ -39,7 +39,7 @@ public static class ArticleHelpers
 
         var dbArticle = await fixture.ExecuteDbContextAsync(db =>
             db.Articles.GetAllData()
-                .Where(a => a.ArticleId == created.Article.ArticleId)
+                .Where(a => a.ArticleId == created.ArticleId)
                 .SingleOrDefaultAsync()
         );
         if (dbArticle is null)

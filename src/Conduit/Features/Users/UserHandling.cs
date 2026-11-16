@@ -17,7 +17,7 @@ public sealed class UserHandling(
     ConduitMapper mapper
 )
 {
-    public async Task<UserEnvelope> Get(Details.Query message, CancellationToken cancellationToken)
+    public async Task<User> Get(Details.Query message, CancellationToken cancellationToken)
     {
         var person = await context
             .Persons.AsNoTracking()
@@ -30,10 +30,10 @@ public sealed class UserHandling(
 
         var user = mapper.PersonToUser(person);
         user.Token = jwtTokenGenerator.CreateToken(person.PersonId);
-        return new UserEnvelope(user);
+        return user;
     }
 
-    public async Task<UserEnvelope> Update(
+    public async Task<User> Update(
         EditUserData userData,
         CancellationToken cancellationToken
     )
@@ -95,6 +95,6 @@ public sealed class UserHandling(
 
         var user = mapper.PersonToUser(person);
         user.Token = jwtTokenGenerator.CreateToken(person.PersonId);
-        return new UserEnvelope(user);
+        return user;
     }
 }

@@ -1,5 +1,4 @@
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Conduit;
 using Conduit.Infrastructure;
@@ -27,23 +26,13 @@ public static class CommentsService
         ServicePipeline.RunAsync(
             nameof(CommentsService),
             nameof(Create),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<CommentsHandling>();
-                    var envelope = await ctx.RunInTransactionAsync(
-                        () =>
-                            handling.Create(
-                                new CreateCommentData(body),
-                                slug,
-                                CancellationToken.None
-                            ),
-                        CancellationToken.None
-                    );
-                    return From(envelope.Comment);
-                }
-            },
+                    var comment = await handling.Create(new CreateCommentData(body), slug, default);
+                    return From(comment);
+                }),
             ("token", token),
             ("slug", slug),
             ("body", body)
@@ -53,18 +42,13 @@ public static class CommentsService
         ServicePipeline.RunAsync(
             nameof(CommentsService),
             nameof(List),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<CommentsHandling>();
-                    var envelope = await handling.List(
-                        new List.Query(slug),
-                        CancellationToken.None
-                    );
-                    return envelope.Comments.Select(From).ToArray();
-                }
-            },
+                    var comments = await handling.List(new List.Query(slug), default);
+                    return comments.Select(From).ToArray();
+                }),
             ("token", token),
             ("slug", slug)
         );
@@ -73,17 +57,12 @@ public static class CommentsService
         ServicePipeline.RunAsync(
             nameof(CommentsService),
             nameof(Delete),
-            async ctx =>
-            {
-                using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
+            ctx =>
+                ctx.RunAuthorizedTransactionAsync(token, async () =>
                 {
                     var handling = ctx.GetRequiredService<CommentsHandling>();
-                    await ctx.RunInTransactionAsync(
-                        () => handling.Delete(slug, id, CancellationToken.None),
-                        CancellationToken.None
-                    );
-                }
-            },
+                    await handling.Delete(slug, id, default);
+                }),
             ("token", token),
             ("slug", slug),
             ("id", id)
