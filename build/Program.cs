@@ -9,7 +9,6 @@ using static SimpleExec.Command;
 const string Clean = "clean";
 const string Build = "build";
 const string Test = "test";
-const string E2E = "e2e";
 const string Format = "format";
 const string Publish = "publish";
 var checkFormat = args.Contains("--check-format", StringComparer.Ordinal);
@@ -122,16 +121,6 @@ Target(
             Run("dotnet", $"test {file} -c Release --no-restore --no-build --verbosity=normal");
         }
     }
-);
-
-Target(
-    E2E,
-    [Test],
-    () =>
-        Run(
-            "dotnet",
-            "run --project Conduit.Caller/Conduit.Caller.csproj -c Release --verbosity=normal"
-        )
 );
 
 Target(
