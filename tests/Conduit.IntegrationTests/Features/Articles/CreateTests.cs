@@ -12,53 +12,47 @@ public class CreateTests : SliceFixture
     {
         var article = await ArticleHelpers.CreateArticle(
             this,
-            new Create.Command(
-                new Create.ArticleData
-                {
-                    Title = "Duplicates",
-                    Description = "d",
-                    Body = "b",
-                    TagList = ["x", "x"],
-                }
-            )
+            new CreateArticleData
+            {
+                Title = "Duplicates",
+                Description = "d",
+                Body = "b",
+                TagList = ["x", "x"],
+            }
         );
         Assert.Equal("x", Assert.Single(article.TagList));
-        var handler = new Create.Handler(
+        var handling = new ArticlesHandling(
             GetDbContext(),
             new StubCurrentUserAccessor(Users.UserHelpers.DefaultUserName)
         );
-        var result = await handler.Handle(
-            new Create.Command(
-                new Create.ArticleData
-                {
-                    Title = "Existing duplicates",
-                    Description = "d",
-                    Body = "b",
-                    TagList = ["x", "x"],
-                }
-            ),
+        var result = await handling.Create(
+            new CreateArticleData
+            {
+                Title = "Existing duplicates",
+                Description = "d",
+                Body = "b",
+                TagList = ["x", "x"],
+            },
             default
         );
-        Assert.Equal("x", Assert.Single(result.Article.TagList));
+        Assert.Equal("x", Assert.Single(result.TagList));
     }
 
     [Fact]
     public async Task Expect_Create_Article()
     {
-        var command = new Create.Command(
-            new Create.ArticleData
-            {
-                Title = "Test article dsergiu77",
-                Description = "Description of the test article",
-                Body = "Body of the test article",
-                TagList = ["tag1", "tag2"],
-            }
-        );
+        var command = new CreateArticleData
+        {
+            Title = "Test article dsergiu77",
+            Description = "Description of the test article",
+            Body = "Body of the test article",
+            TagList = ["tag1", "tag2"],
+        };
 
         var article = await ArticleHelpers.CreateArticle(this, command);
 
         Assert.NotNull(article);
-        Assert.Equal(article.Title, command.Article.Title);
-        Assert.Equal(article.TagList.Count(), command.Article.TagList?.Count());
+        Assert.Equal(article.Title, command.Title);
+        Assert.Equal(article.TagList.Count(), command.TagList?.Count());
     }
 }

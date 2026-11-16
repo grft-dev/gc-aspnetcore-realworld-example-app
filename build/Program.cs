@@ -13,6 +13,62 @@ const string Format = "format";
 const string Publish = "publish";
 var checkFormat = args.Contains("--check-format", StringComparer.Ordinal);
 args = [.. args.Where(x => x != "--check-format")];
+var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
+Directory.SetCurrentDirectory(repoRoot);
+
+string ResolveCSharpierDll()
+{
+    var nugetPackages = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+    if (string.IsNullOrWhiteSpace(nugetPackages))
+    {
+        nugetPackages = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".nuget",
+            "packages"
+        );
+    }
+
+    var candidates = new[]
+    {
+        Path.Combine(
+            nugetPackages,
+            "csharpier",
+            "1.3.0",
+            "tools",
+            "net10.0",
+            "any",
+            "CSharpier.dll"
+        ),
+        Path.Combine(
+            nugetPackages,
+            "csharpier",
+            "1.3.0",
+            "tools",
+            "net9.0",
+            "any",
+            "CSharpier.dll"
+        ),
+        Path.Combine(
+            nugetPackages,
+            "csharpier",
+            "1.3.0",
+            "tools",
+            "net8.0",
+            "any",
+            "CSharpier.dll"
+        ),
+    };
+
+    foreach (var candidate in candidates)
+    {
+        if (File.Exists(candidate))
+        {
+            return candidate;
+        }
+    }
+
+    throw new FileNotFoundException("Cannot locate CSharpier.dll in NUGET_PACKAGES.");
+}
 
 Target(
     Clean,
@@ -42,7 +98,8 @@ Target(
     () =>
     {
         Run("dotnet", "tool restore");
-        Run("dotnet", checkFormat ? "csharpier check ." : "csharpier format .");
+        var csharpierDll = ResolveCSharpierDll();
+        Run("dotnet", checkFormat ? $"\"{csharpierDll}\" check ." : $"\"{csharpierDll}\" format .");
     }
 );
 

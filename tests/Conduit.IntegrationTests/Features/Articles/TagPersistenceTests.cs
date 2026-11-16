@@ -34,17 +34,15 @@ public class TagPersistenceTests
         );
         await context.SaveChangesAsync();
         context.ChangeTracker.Clear();
-        var handler = new Edit.Handler(context, new StubCurrentUserAccessor("author"));
-        var result = await handler.Handle(
-            new Edit.Command(
-                new(new Edit.ArticleData { TagList = ["existing", "existing", "new", "new"] }),
-                "article"
-            ),
+        var handling = new ArticlesHandling(context, new StubCurrentUserAccessor("author"));
+        var result = await handling.Edit(
+            new EditArticleData { TagList = ["existing", "existing", "new", "new"] },
+            "article",
             default
         );
-        Assert.Equal(2, result.Article.TagList.Count);
-        Assert.Contains("existing", result.Article.TagList);
-        Assert.Contains("new", result.Article.TagList);
+        Assert.Equal(2, result.TagList.Count);
+        Assert.Contains("existing", result.TagList);
+        Assert.Contains("new", result.TagList);
         context.ChangeTracker.Clear();
         Assert.Equal(2, await context.Tags.CountAsync());
         Assert.Equal(2, await context.ArticleTags.CountAsync());

@@ -55,6 +55,9 @@ The main validation target formats the repository, builds the solution in Releas
 dotnet run --project build/build.csproj -- test
 ```
 
+The Graft smoke caller has been moved outside this repository to
+`../ports-e2e/gc-aspnetcore-realworld-graft-e2e` and is run separately.
+
 To format without building:
 
 ```sh

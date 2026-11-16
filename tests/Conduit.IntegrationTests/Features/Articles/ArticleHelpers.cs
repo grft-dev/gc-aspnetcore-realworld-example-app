@@ -11,14 +11,14 @@ namespace Conduit.IntegrationTests.Features.Articles;
 public static class ArticleHelpers
 {
     /// <summary>
-    /// creates an article based on the given Create command. It also creates a default user
+    /// creates an article based on the given article data. It also creates a default user
     /// </summary>
     /// <param name="fixture"></param>
-    /// <param name="command"></param>
+    /// <param name="articleData"></param>
     /// <returns></returns>
     public static async Task<Domain.Article> CreateArticle(
         SliceFixture fixture,
-        Create.Command command
+        CreateArticleData articleData
     )
     {
         // first create the default user
@@ -31,15 +31,15 @@ public static class ArticleHelpers
         var dbContext = fixture.GetDbContext();
         var currentAccessor = new StubCurrentUserAccessor(user.Username);
 
-        var articleCreateHandler = new Create.Handler(dbContext, currentAccessor);
-        var created = await articleCreateHandler.Handle(
-            command,
+        var articlesHandling = new ArticlesHandling(dbContext, currentAccessor);
+        var created = await articlesHandling.Create(
+            articleData,
             new System.Threading.CancellationToken()
         );
 
         var dbArticle = await fixture.ExecuteDbContextAsync(db =>
             db.Articles.GetAllData()
-                .Where(a => a.ArticleId == created.Article.ArticleId)
+                .Where(a => a.ArticleId == created.ArticleId)
                 .SingleOrDefaultAsync()
         );
         if (dbArticle is null)

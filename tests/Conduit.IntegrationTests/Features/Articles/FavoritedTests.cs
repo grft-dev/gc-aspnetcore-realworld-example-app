@@ -27,16 +27,11 @@ public class FavoritedTests : SliceFixture
                 : username == "author" ? author.PersonId
                 : 3
         );
-        var details = await new Details.QueryHandler(db, accessor).Handle(
-            new Details.Query("article"),
-            default
-        );
-        Assert.Equal(expected, details.Article.Favorited);
-        Assert.Equal(1, details.Article.FavoritesCount);
-        var list = await new List.QueryHandler(db, accessor).Handle(
-            new List.Query(null, null, null, null, null),
-            default
-        );
+        var handling = new ArticlesHandling(db, accessor);
+        var details = await handling.Details(new Details.Query("article"), default);
+        Assert.Equal(expected, details.Favorited);
+        Assert.Equal(1, details.FavoritesCount);
+        var list = await handling.List(new List.Query(null, null, null, null, null), default);
         Assert.Equal(expected, Assert.Single(list.Articles).Favorited);
         Assert.Equal(1, Assert.Single(list.Articles).FavoritesCount);
     }

@@ -3,11 +3,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Conduit.Domain;
 using Conduit.Features.Articles;
-using Conduit.Features.Users;
 using Conduit.Infrastructure;
+using Graftcode.Pipeline;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit;
-using UserCreate = Conduit.Features.Users.Create;
 
 namespace Conduit.IntegrationTests;
 
@@ -17,43 +17,34 @@ public class TransactionTests : SliceFixture
     public async Task Queries_Do_Not_Start_A_Transaction()
     {
         var db = GetDbContext();
-        var pipeline = new DBContextTransactionPipelineBehavior<List.Query, ArticlesEnvelope>(db);
-        await pipeline.Handle(
-            new List.Query(null, null, null, null, null),
-            (_, _) =>
-            {
-                Assert.Null(db.Database.CurrentTransaction);
-                return ValueTask.FromResult(new ArticlesEnvelope());
-            },
-            CancellationToken.None
-        );
+        var handling = new ArticlesHandling(db, new StubCurrentUserAccessor("nobody"));
+        await handling.List(new List.Query(null, null, null, null, null), CancellationToken.None);
+        Assert.Null(db.Database.CurrentTransaction);
     }
 
     [Fact]
     public async Task Failed_Commands_Roll_Back_Partial_Writes()
     {
-        var db = GetDbContext();
-        var pipeline = new DBContextTransactionPipelineBehavior<UserCreate.Command, UserEnvelope>(
-            db
-        );
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            pipeline
-                .Handle(
-                    new UserCreate.Command(
-                        new UserCreate.UserData("partial", "partial@example.com", "password")
-                    ),
-                    async (_, cancellationToken) =>
+        await ExecuteScopeAsync(async services =>
+        {
+            var db = services.GetRequiredService<ConduitContext>();
+            var serviceContext = new ServiceContext("TransactionTests", "Rollback", services, []);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                serviceContext.RunInTransactionAsync(
+                    async () =>
                     {
                         Assert.NotNull(db.Database.CurrentTransaction);
                         db.Add(new Person { Username = "partial" });
-                        await db.SaveChangesAsync(cancellationToken);
+                        await db.SaveChangesAsync(CancellationToken.None);
                         throw new InvalidOperationException("Failure after the first save.");
                     },
                     CancellationToken.None
                 )
-                .AsTask()
-        );
-        Assert.Null(db.Database.CurrentTransaction);
-        Assert.Equal(0, await db.Persons.CountAsync());
+            );
+
+            Assert.Null(db.Database.CurrentTransaction);
+            Assert.Equal(0, await db.Persons.CountAsync());
+        });
     }
 }
