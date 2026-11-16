@@ -23,7 +23,7 @@ public static class UsersService
                 return await ctx.RunInTransactionAsync(
                     () =>
                         handling.Register(
-                            new Create.UserData(username, email, password),
+                            new RegisterUserData(username, email, password),
                             CancellationToken.None
                         ),
                     CancellationToken.None

@@ -20,7 +20,7 @@ public sealed class UsersHandling(
 )
 {
     public async Task<UserEnvelope> Register(
-        Create.UserData userData,
+        RegisterUserData userData,
         CancellationToken cancellationToken
     )
     {

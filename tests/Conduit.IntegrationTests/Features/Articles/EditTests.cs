@@ -12,7 +12,7 @@ public class EditTests : SliceFixture
     [Fact]
     public async Task Expect_Edit_Article()
     {
-        var createCommand = new Create.ArticleData
+        var createCommand = new CreateArticleData
         {
             Title = "Test article dsergiu77",
             Description = "Description of the test article",
@@ -22,7 +22,7 @@ public class EditTests : SliceFixture
 
         var createdArticle = await ArticleHelpers.CreateArticle(this, createCommand);
 
-        var command = new Edit.ArticleData
+        var command = new EditArticleData
         {
             Title = "Updated " + createdArticle.Title,
             Description = "Updated " + createdArticle.Description,

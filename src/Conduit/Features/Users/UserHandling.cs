@@ -34,7 +34,7 @@ public sealed class UserHandling(
     }
 
     public async Task<UserEnvelope> Update(
-        Edit.UserData userData,
+        EditUserData userData,
         CancellationToken cancellationToken
     )
     {

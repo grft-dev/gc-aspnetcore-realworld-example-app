@@ -18,7 +18,7 @@ public static class ArticleHelpers
     /// <returns></returns>
     public static async Task<Domain.Article> CreateArticle(
         SliceFixture fixture,
-        Create.ArticleData articleData
+        CreateArticleData articleData
     )
     {
         // first create the default user

@@ -12,7 +12,7 @@ public class CreateTests : SliceFixture
     {
         var article = await ArticleHelpers.CreateArticle(
             this,
-            new Create.ArticleData
+            new CreateArticleData
             {
                 Title = "Duplicates",
                 Description = "d",
@@ -26,7 +26,7 @@ public class CreateTests : SliceFixture
             new StubCurrentUserAccessor(Users.UserHelpers.DefaultUserName)
         );
         var result = await handling.Create(
-            new Create.ArticleData
+            new CreateArticleData
             {
                 Title = "Existing duplicates",
                 Description = "d",
@@ -41,7 +41,7 @@ public class CreateTests : SliceFixture
     [Fact]
     public async Task Expect_Create_Article()
     {
-        var command = new Create.ArticleData
+        var command = new CreateArticleData
         {
             Title = "Test article dsergiu77",
             Description = "Description of the test article",

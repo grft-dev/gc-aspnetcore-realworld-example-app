@@ -35,7 +35,7 @@ public static class CommentsService
                     var envelope = await ctx.RunInTransactionAsync(
                         () =>
                             handling.Create(
-                                new Create.CommentData(body),
+                                new CreateCommentData(body),
                                 slug,
                                 CancellationToken.None
                             ),

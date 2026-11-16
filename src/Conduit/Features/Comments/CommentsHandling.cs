@@ -16,7 +16,7 @@ public sealed class CommentsHandling(
 )
 {
     public async Task<CommentEnvelope> Create(
-        Create.CommentData commentData,
+        CreateCommentData commentData,
         string slug,
         CancellationToken cancellationToken
     )

@@ -1,6 +1,3 @@
 namespace Conduit.Features.Comments;
 
-public class Create
-{
-    public record CommentData(string? Body);
-}
+public record CreateCommentData(string? Body);

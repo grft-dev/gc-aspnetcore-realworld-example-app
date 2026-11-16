@@ -10,7 +10,7 @@ public class ListTests : SliceFixture
     [Fact]
     public async Task Expect_List_Articles_No_Params()
     {
-        var command = new Create.ArticleData
+        var command = new CreateArticleData
         {
             Title = "Test article list",
             Description = "Description",
@@ -30,7 +30,7 @@ public class ListTests : SliceFixture
     [Fact]
     public async Task Expect_List_Articles_With_Tag_Filter()
     {
-        var command = new Create.ArticleData
+        var command = new CreateArticleData
         {
             Title = "Test article tag filter",
             Description = "Description",
@@ -68,7 +68,7 @@ public class ListTests : SliceFixture
         for (var i = 0; i < 3; i++)
         {
             await handling.Create(
-                new Create.ArticleData
+                new CreateArticleData
                 {
                     Title = $"Test article pagination {i}",
                     Description = "Description",

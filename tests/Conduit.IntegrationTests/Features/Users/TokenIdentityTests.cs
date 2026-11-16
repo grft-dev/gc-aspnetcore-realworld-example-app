@@ -58,7 +58,7 @@ public class TokenIdentityTests
         var accessor = scope.ServiceProvider.GetRequiredService<ICurrentUserAccessor>();
         Assert.Equal(person.PersonId, accessor.GetCurrentPersonId());
         var article = await new Conduit.Features.Articles.ArticlesHandling(db, accessor).Create(
-            new Conduit.Features.Articles.Create.ArticleData
+            new Conduit.Features.Articles.CreateArticleData
             {
                 Title = "After rename",
                 Description = "d",

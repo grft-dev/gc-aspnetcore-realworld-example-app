@@ -14,7 +14,7 @@ public class DeleteTests : SliceFixture
     [Fact]
     public async Task Expect_Delete_Article()
     {
-        var createCmd = new Create.ArticleData
+        var createCmd = new CreateArticleData
         {
             Title = "Test article dsergiu77",
             Description = "Description of the test article",
@@ -44,7 +44,7 @@ public class DeleteTests : SliceFixture
     [Fact]
     public async Task Expect_Delete_Article_With_Tags()
     {
-        var createCmd = new Create.ArticleData
+        var createCmd = new CreateArticleData
         {
             Title = "Test article dsergiu77",
             Description = "Description of the test article",
@@ -78,7 +78,7 @@ public class DeleteTests : SliceFixture
     [Fact]
     public async Task Expect_Delete_Article_With_Comments()
     {
-        var createArticleCmd = new Create.ArticleData
+        var createArticleCmd = new CreateArticleData
         {
             Title = "Test article dsergiu77",
             Description = "Description of the test article",
@@ -97,7 +97,9 @@ public class DeleteTests : SliceFixture
         var slug = dbArticle.Slug;
 
         // create article comment
-        var createCommentData = new Conduit.Features.Comments.Create.CommentData("article comment");
+        var createCommentData = new Conduit.Features.Comments.CreateCommentData(
+            "article comment"
+        );
 
         var comment = await CommentHelpers.CreateComment(
             this,

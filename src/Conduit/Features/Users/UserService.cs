@@ -55,7 +55,7 @@ public static class UserService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var user = new Edit.UserData();
+                    var user = new EditUserData();
                     if (username is not null)
                     {
                         user.Username = username;

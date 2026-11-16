@@ -111,7 +111,7 @@ public static class ArticlesService
                     var envelope = await ctx.RunInTransactionAsync(
                         () =>
                             handling.Create(
-                                new Create.ArticleData
+                                new CreateArticleData
                                 {
                                     Title = title,
                                     Description = description,
@@ -147,7 +147,7 @@ public static class ArticlesService
             {
                 using (GraftUser.Begin(ctx, await GraftUser.Authenticate(ctx, token)))
                 {
-                    var article = new Edit.ArticleData
+                    var article = new EditArticleData
                     {
                         Title = title,
                         Description = description,

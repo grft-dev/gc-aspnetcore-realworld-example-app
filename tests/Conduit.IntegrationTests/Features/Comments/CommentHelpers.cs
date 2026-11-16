@@ -20,7 +20,7 @@ public static class CommentHelpers
     /// <returns></returns>
     public static async Task<Domain.Comment> CreateComment(
         SliceFixture fixture,
-        Create.CommentData commentData,
+        CreateCommentData commentData,
         string slug,
         string userName
     )

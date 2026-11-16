@@ -109,13 +109,13 @@ public class SliceFixture : IDisposable
     ) =>
         request switch
         {
-            Conduit.Features.Users.Create.UserData user => await services
+            Conduit.Features.Users.RegisterUserData user => await services
                 .GetRequiredService<Conduit.Features.Users.UsersHandling>()
                 .Register(user, cancellationToken),
             Conduit.Features.Users.Login.Command command => await services
                 .GetRequiredService<Conduit.Features.Users.UsersHandling>()
                 .Login(command, cancellationToken),
-            Conduit.Features.Users.Edit.UserData user => await services
+            Conduit.Features.Users.EditUserData user => await services
                 .GetRequiredService<Conduit.Features.Users.UserHandling>()
                 .Update(user, cancellationToken),
             Conduit.Features.Users.Details.Query query => await services
@@ -124,7 +124,7 @@ public class SliceFixture : IDisposable
             Conduit.Features.Profiles.Details.Query query => await services
                 .GetRequiredService<Conduit.Features.Profiles.ProfilesHandling>()
                 .Get(query, cancellationToken),
-            Conduit.Features.Articles.Create.ArticleData articleData => await services
+            Conduit.Features.Articles.CreateArticleData articleData => await services
                 .GetRequiredService<Conduit.Features.Articles.ArticlesHandling>()
                 .Create(articleData, cancellationToken),
             Conduit.Features.Articles.Details.Query query => await services

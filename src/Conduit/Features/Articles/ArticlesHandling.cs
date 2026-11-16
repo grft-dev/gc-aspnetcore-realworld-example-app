@@ -116,7 +116,7 @@ public sealed class ArticlesHandling(
     }
 
     public async Task<ArticleEnvelope> Create(
-        Create.ArticleData articleData,
+        CreateArticleData articleData,
         CancellationToken cancellationToken
     )
     {
@@ -171,7 +171,7 @@ public sealed class ArticlesHandling(
     }
 
     public async Task<ArticleEnvelope> Edit(
-        Edit.ArticleData articleData,
+        EditArticleData articleData,
         string articleSlug,
         CancellationToken cancellationToken
     )

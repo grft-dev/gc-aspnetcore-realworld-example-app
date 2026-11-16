@@ -36,7 +36,7 @@ public class TagPersistenceTests
         context.ChangeTracker.Clear();
         var handling = new ArticlesHandling(context, new StubCurrentUserAccessor("author"));
         var result = await handling.Edit(
-            new Edit.ArticleData { TagList = ["existing", "existing", "new", "new"] },
+            new EditArticleData { TagList = ["existing", "existing", "new", "new"] },
             "article",
             default
         );
