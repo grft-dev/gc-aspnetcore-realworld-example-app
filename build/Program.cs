@@ -69,7 +69,7 @@ Target(
 Target(
     Publish,
     [Test],
-    ["src/Conduit"],
+    ["src/Conduit.GraftHost"],
     project =>
     {
         Run(

@@ -1,0 +1,45 @@
+name: conduit-graft
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: conduit-graft-sqlserver
+    ports:
+      - "1436:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+      - MSSQL_SA_PASSWORD=8jkGh47hnDw89H@q8LN2
+    healthcheck:
+      test: [ "CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"8jkGh47hnDw89H@q8LN2\" -C -Q \"SELECT 1\" || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  db-seed:
+    image: mcr.microsoft.com/mssql-tools
+    container_name: conduit-graft-db-seed
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    volumes:
+      - ./db/seed.sql:/seed.sql:ro
+    environment:
+      - SQLCMDPASSWORD=8jkGh47hnDw89H@q8LN2
+    entrypoint: ["/opt/mssql-tools/bin/sqlcmd", "-b", "-S", "sqlserver", "-U", "sa", "-i", "/seed.sql"]
+    restart: "no"
+
+  conduit-grafthost:
+    image: conduit/grafthost:1.0
+    build:
+      context: .
+      dockerfile: Conduit.GraftHost/Dockerfile
+    depends_on:
+      db-seed:
+        condition: service_completed_successfully
+    ports:
+      - "8094:80"
+      - "8095:81"
+    environment:
+      - CONDUIT_CN=server=sqlserver,1433;user id=sa;password=8jkGh47hnDw89H@q8LN2;database=Conduit;trustServerCertificate=true;
+      - CONDUIT_TOKEN_SECRET=conduit-demo-token-secret

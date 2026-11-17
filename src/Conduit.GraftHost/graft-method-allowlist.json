@@ -1,0 +1,51 @@
+{
+  "modules": [
+    "Conduit.dll"
+  ],
+  "types": [
+    {
+      "publicApiType": "Conduit.Services.UserService",
+      "methods": [
+        "Register",
+        "Login",
+        "GetCurrentUser",
+        "UpdateUser"
+      ]
+    },
+    {
+      "publicApiType": "Conduit.Services.ProfileService",
+      "methods": [
+        "GetProfile",
+        "Follow",
+        "Unfollow"
+      ]
+    },
+    {
+      "publicApiType": "Conduit.Services.ArticleService",
+      "methods": [
+        "ListArticles",
+        "Feed",
+        "GetArticle",
+        "CreateArticle",
+        "EditArticle",
+        "DeleteArticle",
+        "FavoriteArticle",
+        "UnfavoriteArticle"
+      ]
+    },
+    {
+      "publicApiType": "Conduit.Services.CommentService",
+      "methods": [
+        "CreateComment",
+        "ListComments",
+        "DeleteComment"
+      ]
+    },
+    {
+      "publicApiType": "Conduit.Services.TagService",
+      "methods": [
+        "ListTags"
+      ]
+    }
+  ]
+}
